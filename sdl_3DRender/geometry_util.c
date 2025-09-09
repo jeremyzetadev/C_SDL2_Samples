@@ -56,18 +56,22 @@ void mesh_init_tris_SampleBox(Mesh *m){
         { 1.0f, 0.0f, 1.0f},    {0.0f, 0.0f, 0.0f},    {1.0f, 0.0f, 0.0f},    
     }; 
                                                                          
-    Triangle **arrTri = malloc(sizeof(Triangle) * m->tris_num);
+    Triangle **arrTri = malloc(sizeof(Triangle*) * m->tris_num); //sizeof Triangle pointer for double pointer
     for(size_t i=0; i<m->tris_num; i++){
-        Triangle t;
+        arrTri[i] = (Triangle*)malloc(sizeof(Triangle));
         for(int j=0; j<3; j++){
-            t.p[j] = arr_v[i*3 + j];
+            arrTri[i]->p[j] = arr_v[i*3 + j];
         }
-        arrTri[i] = &t;
     }
     m->tris= arrTri;
 }
 
-
+void mesh_free(Mesh *mesh){
+    if(mesh->tris!=NULL){
+        free(mesh->tris);
+    }
+    free(mesh);
+}
 
 
 

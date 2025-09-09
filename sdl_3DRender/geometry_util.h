@@ -15,3 +15,4 @@ typedef struct {
 Mesh *mesh_create(size_t tris_num);
 void mesh_init_tris(Mesh *mesh);
 void mesh_init_tris_SampleBox(Mesh *mesh);
+void mesh_free(Mesh *mesh);
