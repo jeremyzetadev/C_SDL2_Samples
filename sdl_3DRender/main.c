@@ -114,7 +114,8 @@ void mesh_render(float fElapsedTime){
         t.p[2].x *= 0.5f*(float)SCREEN_WIDTH;
         t.p[2].y *= 0.5f*(float)SCREEN_HEIGHT;
         //Scale into view
-        Render_Triangle(t);
+        Render_TriangleLines(t);
+        Render_TriangleFill(t);
     }
     SDL_UpdateWindowSurface(global.g_window);
     SDL_Delay(32); //30frames

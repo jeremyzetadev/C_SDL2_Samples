@@ -55,3 +55,52 @@ vec3 MultiplyMatrixVector(vec3 i, Matrix m){
     }
     return o;
 }
+
+vec3 Vec_Add(vec3 a, vec3 b){
+    vec3 v_res = {a.x+b.x, a.y+b.y};
+    return v_res;
+}
+
+vec3 Vec_Subtract(vec3 a, vec3 b){
+    vec3 v_res = {a.x-b.x, a.y-b.y};
+    return v_res;
+}
+
+float DotProduct(vec3 a, vec3 b){
+    return (a.x*b.x) + (a.y*b.y) + (a.z*b.z);
+}
+
+vec3 CrossProduct(vec3 a, vec3 b){
+    vec3 v_new;
+    v_new.x = (a.y*b.z) - (a.z*b.y);
+    v_new.y = -((a.x*b.z) - (a.z*b.x));
+    v_new.z = (a.x*b.y) - (a.y*b.x);
+    return v_new;
+}
+
+vec3 Vec_Perpendicular(vec3 v){
+    vec3 v_perp;
+    v_perp.x = v.y;
+    v_perp.y = -v.x;
+    return v_perp;
+}
+
+bool IsPointOnRightSideOfLine(vec3 a, vec3 b, vec3 p){
+    vec3 ap = Vec_Subtract(p, a);
+    vec3 abPerp = Vec_Perpendicular(Vec_Subtract(b, a));
+    return DotProduct(ap, abPerp) >=0;
+}
+
+bool IsPointInTriangle(vec3 a, vec3 b, vec3 c, vec3 p){
+    bool sideAB = IsPointOnRightSideOfLine(a, b, p);
+    bool sideBC = IsPointOnRightSideOfLine(b, c, p);
+    bool sideCA = IsPointOnRightSideOfLine(c, a, p);
+    return (sideAB == sideBC) && (sideBC == sideCA);
+}
+
+
+
+
+
+
+

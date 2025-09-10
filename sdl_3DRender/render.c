@@ -11,7 +11,7 @@ void Render_LineScreenSurface(vec3 v_start, vec3 v_end){
     int width = global.g_screenSurface->w;
     int height = global.g_screenSurface->h;
     int pitch = global.g_screenSurface->pitch / format->BytesPerPixel; // Pitch in pixels
-    Uint32 colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 165, 0); 
+    Uint32 colorBlack = SDL_MapRGB(global.g_screenSurface->format, 0, 0, 0); 
     float v_x = v_end.x - v_start.x;
     float v_y = v_end.y - v_start.y;
     float hypothenuse = sqrt( (v_x*v_x)+(v_y*v_y) );
@@ -21,7 +21,7 @@ void Render_LineScreenSurface(vec3 v_start, vec3 v_end){
     for(int i=0; i<steps; i++){
         int v_x_trail = v_start.x + (i * step_x);
         int v_y_trail = v_start.y + (i * step_y);
-        pixels[v_y_trail*pitch +v_x_trail] = colorOrange;
+        pixels[v_y_trail*pitch +v_x_trail] = colorBlack;
     }
 }
 
@@ -85,8 +85,86 @@ void Render_EditScreenSurfacePixel(enum colorType cType){
 }
 
 
-void Render_Triangle(Triangle t){
+void Render_TriangleLines(Triangle t){
     Render_LineScreenSurface(t.p[0], t.p[1]);
     Render_LineScreenSurface(t.p[1], t.p[2]);
     Render_LineScreenSurface(t.p[2], t.p[0]);
+}
+
+void Render_TriangleFill_Old(Triangle t){
+    SDL_PixelFormat* format = global.g_screenSurface->format;
+    Uint32* pixels = (Uint32*)global.g_screenSurface->pixels;
+    int width = global.g_screenSurface->w;
+    int height = global.g_screenSurface->h;
+    int pitch = global.g_screenSurface->pitch / format->BytesPerPixel; // Pitch in pixels
+    Uint32 colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 165, 0); 
+    // Loop through pixels
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            vec3 v_pixel;
+            v_pixel.x = x; v_pixel.y = y;
+            if(IsPointInTriangle(t.p[0], t.p[1], t.p[2], v_pixel))
+                pixels[y*pitch +x] = colorOrange;
+        }
+    }
+}
+
+float static Min(float x, float y){
+    return x < y ? x : y;
+}
+
+float static Max(float x, float y){
+    return x > y ? x : y;
+}
+
+float static Clamp(float high, float low, float value){
+    if(value > high){
+        return high;
+    } else if(value < low){
+        return low;
+    }
+    return value;
+}
+
+void Render_TriangleFill(Triangle t){
+    SDL_PixelFormat* format = global.g_screenSurface->format;
+    Uint32* pixels = (Uint32*)global.g_screenSurface->pixels;
+    int width = global.g_screenSurface->w;
+    int height = global.g_screenSurface->h;
+    int pitch = global.g_screenSurface->pitch / format->BytesPerPixel; // Pitch in pixels
+    Uint32 colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 165, 0); 
+    
+    float minX = Min(Min(t.p[0].x, t.p[1].x), t.p[2].x);
+    float minY = Min(Min(t.p[0].y, t.p[1].y), t.p[2].y);
+    float maxX = Max(Max(t.p[0].x, t.p[1].x), t.p[2].x);
+    float maxY = Max(Max(t.p[0].y, t.p[1].y), t.p[2].y);
+
+    // int blockStartX = Clamp((int)minX, 0, width-1);
+    // int blockStartY = Clamp((int)minY, 0, height-1);
+    // int blockEndX = Clamp((int)maxX, 0, width-1);
+    // int blockEndY = Clamp((int)maxY, 0, height-1);
+
+    // Loop through bound only of triangle and draw pixel
+    // for (int y = blockStartY; y < blockEndY; y++) {
+    //     for (int x = blockStartX; x < blockEndX; x++) {
+    //         vec3 v_pixel;
+    //         v_pixel.x = x; v_pixel.y = y;
+    //         if(IsPointInTriangle(t.p[0], t.p[1], t.p[2], v_pixel)){
+    //             pixels[y*pitch +x] = colorOrange;
+    //             continue;
+    //         }
+    //     }
+    // }
+
+    // Loop through bound only of triangle and draw pixel
+    for (int y = minY; y < maxY; ++y) {
+        for (int x = minX; x < maxX; ++x) {
+            vec3 v_pixel;
+            v_pixel.x = x; v_pixel.y = y;
+            if(IsPointInTriangle(t.p[0], t.p[1], t.p[2], v_pixel)){
+                pixels[y*pitch +x] = colorOrange;
+                continue;
+            }
+        }
+    }
 }
