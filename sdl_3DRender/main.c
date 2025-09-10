@@ -45,67 +45,36 @@ void UnlockScreenSurface(){
     }
 }
 
-// void init_global_matrices(){
-//     for(int i=0; i<=4; i++){
-//         for(int j=0; j<=4; j++){
-//             global.matRotX.m[i][j] = 0.0f;
-//         }
-//     }
-//     for(int i=0; i<=4; i++){
-//         for(int j=0; j<=4; j++){
-//             global.matRotZ.m[i][j] = 0.0f;
-//         }
-//     }
-// }
+void init_global_matrices(){
+    for(int i=0; i<=4; i++){
+        for(int j=0; j<=4; j++){
+            global.matRotX.m[i][j] = 0.0f;
+        }
+    }
+    for(int i=0; i<=4; i++){
+        for(int j=0; j<=4; j++){
+            global.matRotZ.m[i][j] = 0.0f;
+        }
+    }
+}
 
 void mesh_render(float fElapsedTime){
     float fTheta =0;
     fTheta +=(1.0f * fElapsedTime);
 
-    ///////////////////////////// STACK SMASHING ERROR-FIX ////////////////////////////////////////////
-    ///////////////////////////// STACK SMASHING ERROR-FIX ////////////////////////////////////////////
-    // Set up rotation matrices
-		Matrix matRotZ, matRotX;
-		// Rotation Z
-    for(int i=0; i<4; i++){
-        for(int j=0; j<4; j++){
-            matRotZ.m[i][j] = 0.0f;
-        }
-    }
-		matRotZ.m[0][0] = cosf(fTheta);
-		matRotZ.m[0][1] = sinf(fTheta);
-		matRotZ.m[1][0] = -sinf(fTheta);
-		matRotZ.m[1][1] = cosf(fTheta);
-		matRotZ.m[2][2] = 1;
-		matRotZ.m[3][3] = 1;
+		global.matRotZ.m[0][0] = cosf(fTheta);
+		global.matRotZ.m[0][1] = sinf(fTheta);
+		global.matRotZ.m[1][0] = -sinf(fTheta);
+		global.matRotZ.m[1][1] = cosf(fTheta);
+		global.matRotZ.m[2][2] = 1;
+		global.matRotZ.m[3][3] = 1;
 
-		// Rotation X
-    for(int i=0; i<4; i++){
-        for(int j=0; j<4; j++){
-            matRotX.m[i][j] = 0.0f;
-        }
-    }
-		matRotX.m[0][0] = 1;
-		matRotX.m[1][1] = cosf(fTheta * 0.5f);
-		matRotX.m[1][2] = sinf(fTheta * 0.5f);
-		matRotX.m[2][1] = -sinf(fTheta * 0.5f);
-		matRotX.m[2][2] = cosf(fTheta * 0.5f);
-		matRotX.m[3][3] = 1;
-    ///////////////////////////// STACK SMASHING ERROR-FIX ////////////////////////////////////////////
-    ///////////////////////////// STACK SMASHING ERROR-FIX ////////////////////////////////////////////
-		matRotZ.m[0][0] = cosf(fTheta);
-		matRotZ.m[0][1] = sinf(fTheta);
-		matRotZ.m[1][0] = -sinf(fTheta);
-		matRotZ.m[1][1] = cosf(fTheta);
-		matRotZ.m[2][2] = 1;
-		matRotZ.m[3][3] = 1;
-
-    matRotX.m[0][0] = 1;
-		matRotX.m[1][1] = cosf(fTheta * 0.5f);
-		matRotX.m[1][2] = sinf(fTheta * 0.5f);
-		matRotX.m[2][1] = -sinf(fTheta * 0.5f);
-		matRotX.m[2][2] = cosf(fTheta * 0.5f);
-		matRotX.m[3][3] = 1;
+    global.matRotX.m[0][0] = 1;
+		global.matRotX.m[1][1] = cosf(fTheta * 0.5f);
+		global.matRotX.m[1][2] = sinf(fTheta * 0.5f);
+		global.matRotX.m[2][1] = -sinf(fTheta * 0.5f);
+		global.matRotX.m[2][2] = cosf(fTheta * 0.5f);
+		global.matRotX.m[3][3] = 1;
 
 
     //Mesh triangles
@@ -119,10 +88,10 @@ void mesh_render(float fElapsedTime){
             vec3 tri_vec = (*(mesh_box->tris[i])).p[j];
 
             //Rotate in Z-Axis
-            t.p[j] = MultiplyMatrixVector(tri_vec, matRotZ);
+            t.p[j] = MultiplyMatrixVector(tri_vec, global.matRotZ);
             
             //Rotate in X-Axis
-            t.p[j] = MultiplyMatrixVector(t.p[j], matRotX);
+            t.p[j] = MultiplyMatrixVector(t.p[j], global.matRotX);
             
             //Offset into the screen
             t.p[j].z = t.p[j].z + 3.0f;
@@ -183,7 +152,7 @@ int main(){
     clock_t start, diff;
     float fElapsedTime =0;
     start = clock();
-    // init_global_matrices();
+    init_global_matrices();
     while(isGameRunning){
         LockScreenSurface();
         SDL_Event event;
