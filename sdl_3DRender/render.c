@@ -88,5 +88,5 @@ void Render_EditScreenSurfacePixel(enum colorType cType){
 void Render_Triangle(Triangle t){
     Render_LineScreenSurface(t.p[0], t.p[1]);
     Render_LineScreenSurface(t.p[1], t.p[2]);
-    Render_LineScreenSurface(t.p[3], t.p[0]);
+    Render_LineScreenSurface(t.p[2], t.p[0]);
 }

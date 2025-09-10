@@ -16,7 +16,7 @@
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 
-float fTheta; //dynamic for rotation
+// float fTheta; //dynamic for rotation
 
 void InitializeProgram(){
     if(SDL_Init(SDL_INIT_VIDEO) <0)
@@ -45,25 +45,68 @@ void UnlockScreenSurface(){
     }
 }
 
-void mesh_render(float fElapsedTime){
-    // Set up rotation matrices
-		Matrix matRotZ, matRotX;
+void init_global_matrices(){
+    for(int i=0; i<=4; i++){
+        for(int j=0; j<=4; j++){
+            global.matRotX.m[i][j] = 0.0f;
+        }
+    }
+    for(int i=0; i<=4; i++){
+        for(int j=0; j<=4; j++){
+            global.matRotZ.m[i][j] = 0.0f;
+        }
+    }
+}
 
+void mesh_render(float fElapsedTime){
+    float fTheta =0;
+    fTheta +=(1.0f * fElapsedTime);
+
+    ///////////////////////////// STACK SMASHING ERROR ////////////////////////////////////////////
+    ///////////////////////////// STACK SMASHING ERROR ////////////////////////////////////////////
+    // Set up rotation matrices
+		// Matrix matRotZ, matRotX;
 		// Rotation Z
-		matRotZ.m[0][0] = cosf(fTheta);
-		matRotZ.m[0][1] = sinf(fTheta);
-		matRotZ.m[1][0] = -sinf(fTheta);
-		matRotZ.m[1][1] = cosf(fTheta);
-		matRotZ.m[2][2] = 1;
-		matRotZ.m[3][3] = 1;
+  //   for(int i=0; i<=4; i++){
+  //       for(int j=0; j<=4; j++){
+  //           matRotZ.m[i][j] = 0.0f;
+  //       }
+  //   }
+		// matRotZ.m[0][0] = cosf(fTheta);
+		// matRotZ.m[0][1] = sinf(fTheta);
+		// matRotZ.m[1][0] = -sinf(fTheta);
+		// matRotZ.m[1][1] = cosf(fTheta);
+		// matRotZ.m[2][2] = 1;
+		// matRotZ.m[3][3] = 1;
 
 		// Rotation X
-		matRotX.m[0][0] = 1;
-		matRotX.m[1][1] = cosf(fTheta * 0.5f);
-		matRotX.m[1][2] = sinf(fTheta * 0.5f);
-		matRotX.m[2][1] = -sinf(fTheta * 0.5f);
-		matRotX.m[2][2] = cosf(fTheta * 0.5f);
-		matRotX.m[3][3] = 1;
+  //   for(int i=0; i<=4; i++){
+  //       for(int j=0; j<=4; j++){
+  //           matRotX.m[i][j] = 0.0f;
+  //       }
+  //   }
+		// matRotX.m[0][0] = 1;
+		// matRotX.m[1][1] = cosf(fTheta * 0.5f);
+		// matRotX.m[1][2] = sinf(fTheta * 0.5f);
+		// matRotX.m[2][1] = -sinf(fTheta * 0.5f);
+		// matRotX.m[2][2] = cosf(fTheta * 0.5f);
+		// matRotX.m[3][3] = 1;
+    ///////////////////////////// STACK SMASHING ERROR ////////////////////////////////////////////
+    ///////////////////////////// STACK SMASHING ERROR ////////////////////////////////////////////
+		global.matRotZ.m[0][0] = cosf(fTheta);
+		global.matRotZ.m[0][1] = sinf(fTheta);
+		global.matRotZ.m[1][0] = -sinf(fTheta);
+		global.matRotZ.m[1][1] = cosf(fTheta);
+		global.matRotZ.m[2][2] = 1;
+		global.matRotZ.m[3][3] = 1;
+
+    global.matRotX.m[0][0] = 1;
+		global.matRotX.m[1][1] = cosf(fTheta * 0.5f);
+		global.matRotX.m[1][2] = sinf(fTheta * 0.5f);
+		global.matRotX.m[2][1] = -sinf(fTheta * 0.5f);
+		global.matRotX.m[2][2] = cosf(fTheta * 0.5f);
+		global.matRotX.m[3][3] = 1;
+
 
     //Mesh triangles
     size_t box_triangle_count = 12;
@@ -75,19 +118,20 @@ void mesh_render(float fElapsedTime){
         for(int j=0; j<3; j++){
             vec3 tri_vec = (*(mesh_box->tris[i])).p[j];
 
-            // //Rotate in Z-Axis
-            // t.p[j] = MultiplyMatrixVector(tri_vec, matRotZ);
-            //
-            // //Rotate in Z-Axis
-            // t.p[j] = MultiplyMatrixVector(t.p[j], matRotX);
-            //
-            // //Offset into the screen
-            // t.p[j].z += t.p[j].z + 3.0f;
+            //Rotate in Z-Axis
+            t.p[j] = MultiplyMatrixVector(tri_vec, global.matRotZ);
             
+            //Rotate in X-Axis
+            t.p[j] = MultiplyMatrixVector(t.p[j], global.matRotX);
+            
+            //Offset into the screen
+            t.p[j].z = t.p[j].z + 3.0f;
+             
             //project triangles from 3D --> 2D
-            // t.p[j] = MultiplyMatrixVector(t.p[j], *mproj);
+            t.p[j] = MultiplyMatrixVector(t.p[j], *mproj);
 
-            t.p[j] = MultiplyMatrixVector(tri_vec, *mproj);
+            //no rotation sample
+            // t.p[j] = MultiplyMatrixVector(tri_vec, *mproj);
         }
         //Scale into view
         t.p[0].x += 1.0f;  t.p[0].y += 1.0f;
@@ -104,7 +148,7 @@ void mesh_render(float fElapsedTime){
         Render_Triangle(t);
     }
     SDL_UpdateWindowSurface(global.g_window);
-    SDL_Delay(16);
+    SDL_Delay(32); //30frames
     mesh_free(mesh_box);
     free(mproj);
 }
@@ -129,14 +173,17 @@ int main(){
     Render_FillScreenBlue();
     SDL_UpdateWindowSurface(global.g_window);
     SDL_Delay(700);
-    vec3 v1 = {.x=100, .y=100};
-    vec3 v2 = {.x=400, .y=400};
-    Render_LineScreenSurface(v1, v2);
-    SDL_UpdateWindowSurface(global.g_window);
-    SDL_Delay(700);
+    // vec3 v1 = {.x=100, .y=100};
+    // vec3 v2 = {.x=400, .y=400};
+    // Render_LineScreenSurface(v1, v2);
+    // SDL_UpdateWindowSurface(global.g_window);
+    // SDL_Delay(700);
 
     bool isGameRunning = true;
     clock_t start, diff;
+    float fElapsedTime =0;
+    start = clock();
+    init_global_matrices();
     while(isGameRunning){
         LockScreenSurface();
         SDL_Event event;
@@ -150,12 +197,11 @@ int main(){
                     break;
             }
         }
-        start = clock();
-        float fElapsedTime = diff * 1000.0f / CLOCKS_PER_SEC;
-        fTheta += 1.0f * fElapsedTime;
         //mesh render sample
-        mesh_render(fTheta);
+        mesh_render(fElapsedTime);
         diff = clock() - start;
+        fElapsedTime = diff * 1000.0f / CLOCKS_PER_SEC;
+        Render_FillScreenBlue();
         UnlockScreenSurface();
     }
 
