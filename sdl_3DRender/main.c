@@ -60,7 +60,7 @@ void init_global_matrices(){
 
 void mesh_render(float fElapsedTime){
     float fTheta =0;
-    fTheta +=(1.0f * fElapsedTime);
+    fTheta +=(0.001f * fElapsedTime);
 
 		global.matRotZ.m[0][0] = cosf(fTheta);
 		global.matRotZ.m[0][1] = sinf(fTheta);
@@ -75,7 +75,6 @@ void mesh_render(float fElapsedTime){
 		global.matRotX.m[2][1] = -sinf(fTheta * 0.5f);
 		global.matRotX.m[2][2] = cosf(fTheta * 0.5f);
 		global.matRotX.m[3][3] = 1;
-
 
     //Mesh triangles
     size_t box_triangle_count = 12;
@@ -114,11 +113,10 @@ void mesh_render(float fElapsedTime){
         t.p[2].x *= 0.5f*(float)SCREEN_WIDTH;
         t.p[2].y *= 0.5f*(float)SCREEN_HEIGHT;
         //Scale into view
-        Render_TriangleLines(t);
         Render_TriangleFill(t);
+        Render_TriangleLines(t);
     }
     SDL_UpdateWindowSurface(global.g_window);
-    SDL_Delay(32); //30frames
     mesh_free(mesh_box);
     free(mproj);
 }
