@@ -11,8 +11,8 @@ Matrix *mat_create_projectionmatrix_sample(){
     Matrix *matProj = malloc(sizeof(Matrix));
     // initialize matrix values to 0
     // can also use memset to initialize matrix to 0
-    for(int i=0; i<=4; i++){
-        for(int j=0; j<=4; j++){
+    for(int i=0; i<4; i++){
+        for(int j=0; j<4; j++){
             matProj->m[i][j] = 0.0f;
         }
     }

@@ -7,8 +7,8 @@ typedef struct{
     SDL_Window *g_window;
     SDL_Surface *g_screenSurface;
     SDL_Renderer *g_renderer;
-    Matrix matRotX;
-    Matrix matRotZ;
+    // Matrix matRotX;
+    // Matrix matRotZ;
 } Global;
 
 extern Global global;
