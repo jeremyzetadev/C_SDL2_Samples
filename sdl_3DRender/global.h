@@ -9,6 +9,7 @@ typedef struct{
     SDL_Renderer *g_renderer;
     Matrix matRotX;
     Matrix matRotZ;
+    vec3 g_camera;
 } Global;
 
 extern Global global;
