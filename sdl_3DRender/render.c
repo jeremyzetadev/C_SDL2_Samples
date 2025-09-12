@@ -21,7 +21,9 @@ void Render_LineScreenSurface(vec3 v_start, vec3 v_end){
     for(int i=0; i<steps; i++){
         int v_x_trail = v_start.x + (i * step_x);
         int v_y_trail = v_start.y + (i * step_y);
-        pixels[v_y_trail*pitch +v_x_trail] = colorBlack;
+        if((v_y_trail*pitch + v_x_trail) >=0){
+            pixels[v_y_trail*pitch +v_x_trail] = colorBlack;
+        }
     }
 }
 
@@ -81,7 +83,9 @@ void Render_EditScreenSurfacePixel(enum colorType cType){
         case green:
            col =SDL_MapRGB(global.g_screenSurface->format, 0, 255, 0);
     }
-    pixels[y*pitch + x] = col;
+    if((y*pitch + x) >=0){
+        pixels[y*pitch + x] = col;
+    }
 }
 
 
@@ -139,10 +143,21 @@ void Render_TriangleFill(Triangle t){
     float maxX = Max(Max(t.p[0].x, t.p[1].x), t.p[2].x);
     float maxY = Max(Max(t.p[0].y, t.p[1].y), t.p[2].y);
 
-    // int blockStartX = Clamp((int)minX, 0, width-1);
-    // int blockStartY = Clamp((int)minY, 0, height-1);
-    // int blockEndX = Clamp((int)maxX, 0, width-1);
-    // int blockEndY = Clamp((int)maxY, 0, height-1);
+    //Guard Clause for minmax use screen as bounds
+    // if (minX<0) minX=0;
+    // if (minY<0) minY=0;
+    // if (maxX<0) maxX=width;
+    // if (maxY<0) maxY=height;
+    // if (minX>width) minX=0;
+    // if (minY>height) minY=0;
+    // if (maxX>width) maxX=width;
+    // if (maxY>height) maxY=height;
+    //Guard Clause for minmax use screen as bounds
+
+    int blockStartX = Clamp((int)minX, 0, width-1);
+    int blockStartY = Clamp((int)minY, 0, height-1);
+    int blockEndX = Clamp((int)maxX, 0, width-1);
+    int blockEndY = Clamp((int)maxY, 0, height-1);
 
     // Loop through bound only of triangle and draw pixel
     // for (int y = blockStartY; y < blockEndY; y++) {
@@ -156,15 +171,29 @@ void Render_TriangleFill(Triangle t){
     //     }
     // }
 
-    // Loop through bound only of triangle and draw pixel
+    //Loop through bound only of triangle and draw pixel
     for (int y = minY; y < maxY; ++y) {
         for (int x = minX; x < maxX; ++x) {
             vec3 v_pixel;
             v_pixel.x = x; v_pixel.y = y;
             if(IsPointInTriangle(t.p[0], t.p[1], t.p[2], v_pixel)){
-                pixels[y*pitch +x] = colorOrange;
+                if((y*pitch +x)>0){
+                    pixels[y*pitch +x] = colorOrange;
+                }
                 continue;
             }
         }
     }
+
+    // //OLD
+    // for (int y = 0; y < height; ++y) {
+    //     for (int x = 0; x < width; ++x) {
+    //         vec3 v_pixel;
+    //         v_pixel.x = x; v_pixel.y = y;
+    //         if(IsPointInTriangle(t.p[0], t.p[1], t.p[2], v_pixel))
+    //             if((y*pitch +x)>0){
+    //                 pixels[y*pitch +x] = colorOrange;
+    //             }
+    //     }
+    // }
 }
