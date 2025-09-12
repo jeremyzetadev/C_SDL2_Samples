@@ -61,7 +61,7 @@ void init_global_properties(){
 
 void mesh_render(float fElapsedTime){
     float fTheta =0;
-    fTheta +=(0.01f * fElapsedTime);
+    fTheta +=(0.002f * fElapsedTime);
 
 		global.matRotZ.m[0][0] = cosf(fTheta);
 		global.matRotZ.m[0][1] = sinf(fTheta);
@@ -77,11 +77,15 @@ void mesh_render(float fElapsedTime){
 		global.matRotX.m[2][2] = cosf(fTheta * 0.5f);
 		global.matRotX.m[3][3] = 1;
 
+    // size_t box_triangle_count = 12;
+    // Mesh *mesh_box = mesh_create(box_triangle_count);
+    // mesh_init_tris_SampleBox(mesh_box);
+    Mesh *mesh_box = mesh_create_loadfromObj();
+    mesh_loadfrom_Obj(mesh_box);
+
     //Mesh triangles
     vec3 normal, line1, line2;
-    size_t box_triangle_count = 12;
-    Mesh *mesh_box = mesh_create(box_triangle_count);
-    mesh_init_tris_SampleBox(mesh_box);
+
     Matrix *mproj = mat_create_projectionmatrix_sample();
     for(size_t i=0; i<mesh_box->tris_num; i++){
         Triangle t;
@@ -138,8 +142,8 @@ void mesh_render(float fElapsedTime){
             // if(normal.z<0)
             if(alignment<0.0f)
             {
-                //TODO implement Illumination by distance from camera (near lighter, far darker) 
-                //TODO maybe add at function Render_TriangleFill by using its z value of vector
+                //todo implement illumination by distance from camera (near lighter, far darker) 
+                //todo maybe add at function render_trianglefill by using its z value of vector
 
                 //project triangles from 3D --> 2D
                 t.p[0] = MultiplyMatrixVector(t.p[0], *mproj);
