@@ -5,6 +5,7 @@
 
 typedef struct {
     vec3 p[3];
+    size_t color;
 } Triangle;
 
 typedef struct {

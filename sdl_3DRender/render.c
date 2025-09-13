@@ -178,7 +178,8 @@ void Render_TriangleFill(Triangle t){
             v_pixel.x = x; v_pixel.y = y;
             if(IsPointInTriangle(t.p[0], t.p[1], t.p[2], v_pixel)){
                 if((y*pitch +x)>0){
-                    pixels[y*pitch +x] = colorOrange;
+                    // pixels[y*pitch +x] = colorOrange;
+                    pixels[y*pitch +x] = t.color;
                 }
                 continue;
             }
@@ -197,3 +198,5 @@ void Render_TriangleFill(Triangle t){
     //     }
     // }
 }
+
+

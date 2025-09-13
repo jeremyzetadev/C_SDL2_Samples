@@ -110,9 +110,9 @@ void mesh_render(float fElapsedTime){
         t.p[2] = MultiplyMatrixVector(t.p[2], global.matRotX);
         
         //Offset into the screen
-        t.p[0].z = t.p[0].z + 3.0f;
-        t.p[1].z = t.p[1].z + 3.0f;
-        t.p[2].z = t.p[2].z + 3.0f;
+        t.p[0].z = t.p[0].z + 4.0f;
+        t.p[1].z = t.p[1].z + 4.0f;
+        t.p[2].z = t.p[2].z + 4.0f;
 
         //triangle normal compute for show if facing the camera
         //triangle normal compute for show if facing the camera
@@ -145,8 +145,15 @@ void mesh_render(float fElapsedTime){
         // if(normal.z<0)
         if(alignment<0.0f)
         {
-            //todo implement illumination by distance from camera (near lighter, far darker) 
-            //todo maybe add at function render_trianglefill by using its z value of vector
+            ////// implement illumination by distance from camera (near lighter, far darker)  /////
+            vec3 light_direction = { 0.0f, 0.0f, -1.0f };
+            float l = sqrtf(light_direction.x*light_direction.x + light_direction.y*light_direction.y + light_direction.z*light_direction.z);
+            light_direction.x /= l; light_direction.y /= l; light_direction.z /= l;
+
+				    // How similar is normal to light direction
+				    float dp = normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z;
+				    t.color = GetColour(dp);
+            ////// implement illumination by distance from camera (near lighter, far darker)  /////
 
             //project triangles from 3D --> 2D
             t.p[0] = MultiplyMatrixVector(t.p[0], *mproj);
@@ -164,47 +171,38 @@ void mesh_render(float fElapsedTime){
             t.p[1].y *= 0.5f*(float)SCREEN_HEIGHT;
             t.p[2].y *= 0.5f*(float)SCREEN_HEIGHT;
 
-            // ArrTri[i] = t;
-            // ArrTriBool[i] = true;
-            Render_TriangleFill(t);
-            Render_TriangleLines(t);
+            ArrTri[i] = t;
+            ArrTriBool[i] = true;
         } else{
-            // ArrTri[i] = t;   //TODO comment later
-            // ArrTriBool[i] = false;
+            ArrTri[i] = t;   
+            ArrTriBool[i] = false;
         }
     }
 
     //remove Triangles not rendermesh_box->tris_numand re-align
-    // int sizeToRenderTri = 0;
-    // int ArrTriIndexExist[mesh_box->tris_num];
-    // for(int i=0; i<mesh_box->tris_num; i++){
-    //     if(ArrTriBool[i]==true){  
-    //         ArrTriIndexExist[i] = sizeToRenderTri;
-    //         sizeToRenderTri++;
-    //     }else{
-    //         ArrTriIndexExist[i] = 0;
-    //     }
-    // }
-    // Triangle ArrTri_To_Render[sizeToRenderTri];
-    // int idx = 0;
-    // for(int i=0; i<sizeToRenderTri; i++){
-    //     ArrTri_To_Render[idx]= ArrTri[ArrTriIndexExist[i]];
-    //     idx++;
-    // }
+    int sizeToRenderTri = 0;
+    int ArrTriIndexExist[mesh_box->tris_num];
+    for(int i=0; i<mesh_box->tris_num; i++){
+        if(ArrTriBool[i]==true){  
+            sizeToRenderTri++;
+        }
+    }
+    Triangle ArrTri_To_Render[sizeToRenderTri];
+    int idx = 0;
+    for(int i=0; i<mesh_box->tris_num; i++){
+        if(ArrTriBool[i]==true){
+            ArrTri_To_Render[idx]= ArrTri[i];
+            idx++;
+        }
+    }
 
     // sort through z
-    // int numElements = sizeof(ArrTri_To_Render) / sizeof(Triangle);
-    // qsort(ArrTri_To_Render, numElements, sizeof(Triangle), compareMyStructs);
-    // for(int i=0; i<numElements; i++){
-    //     Render_TriangleFill(ArrTri_To_Render[i]);
-    //     Render_TriangleLines(ArrTri_To_Render[i]);
-    // }
-
-    // render all triangles
-    // for(int i=0; i<mesh_box->tris_num; i++){
-    //     Render_TriangleFill(ArrTri[i]);
-    //     Render_TriangleLines(ArrTri[i]);
-    // }
+    int numElements = sizeof(ArrTri_To_Render) / sizeof(Triangle);
+    qsort(ArrTri_To_Render, numElements, sizeof(Triangle), compareMyStructs);
+    for(int i=0; i<sizeToRenderTri; i++){
+        Render_TriangleFill(ArrTri_To_Render[i]);
+        Render_TriangleLines(ArrTri_To_Render[i]);
+    }
 
     SDL_UpdateWindowSurface(global.g_window);
     SDL_Delay(16);
