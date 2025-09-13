@@ -1,5 +1,7 @@
 #pragma once
 #include<stdbool.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_pixels.h>
 
 typedef struct {
     float x;
@@ -24,3 +26,7 @@ vec3 CrossProduct(vec3 a, vec3 b);
 vec3 Vec_Perpendicular(vec3 v);
 bool IsPointOnRightSideOfLine(vec3 a, vec3 b, vec3 p);
 bool IsPointInTriangle(vec3 a, vec3 b, vec3 c, vec3 p);
+
+
+Uint32 GetColour(float lum);
+int compareMyStructs(const void *a, const void *b);

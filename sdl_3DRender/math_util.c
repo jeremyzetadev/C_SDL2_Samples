@@ -1,6 +1,11 @@
 #include "math_util.h"
 #include <math.h>
 #include <stdlib.h>
+#include "geometry_util.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_pixels.h>
+#include "global.h"
+#include <stdint.h>
 
 Matrix *mat_create(){
     Matrix *m = malloc(sizeof(Matrix));
@@ -98,9 +103,48 @@ bool IsPointInTriangle(vec3 a, vec3 b, vec3 c, vec3 p){
     return (sideAB == sideBC) && (sideBC == sideCA);
 }
 
+int compareMyStructs(const void *a, const void *b) {
+    const Triangle *tA = (const Triangle *)a;
+    const Triangle *tB = (const Triangle *)b;
 
+    float z1 = (tA->p[0].z + tA->p[1].z + tA->p[2].z)/3;
+    float z2 = (tB->p[0].z + tB->p[1].z + tB->p[2].z)/3;
+    
+    return z1>z2;
+    // if(z1<z2){
+    //     return -1;
+    // } else if(z1>z2){
+    //     return 1;
+    // } else {
+    //     return 0;
+    // }
+}
 
+Uint32 GetColour(float lum)
+	{
+		int pixel_bw = (int)(13.0f*lum);   
+    Uint32 colorOrange;
+		switch (pixel_bw)
+		{
+		case 0: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 100, 0); break;
 
+		case 1: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 110, 0); break;
+		case 2: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 120, 0); break;
+		case 3: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 130, 0); break;
+		case 4: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 140, 0); break;
+
+		case 5: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 150, 0); break;
+		case 6: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 160, 0); break;
+		case 7: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 170, 0); break;
+		case 8: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 180, 0); break;
+
+		case 9:  colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 190, 0); break;
+		case 10: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 200, 0); break;
+		case 11: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 210, 0); break;
+		case 12: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 220, 0); break;
+	}
+    return colorOrange;
+}
 
 
 
