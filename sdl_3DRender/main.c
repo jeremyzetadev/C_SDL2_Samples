@@ -89,7 +89,8 @@ void mesh_render(float fElapsedTime){
     bool ArrTriBool[mesh_box->tris_num];
     memset(ArrTriBool, false, sizeof(ArrTriBool)); 
 
-    Matrix *mproj = mat_create_projectionmatrix_sample();
+    // Matrix *mproj = mat_create_projectionmatrix_sample();
+    Matrix mproj = Matrix_MakeProjection(90.0f, (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH, 0.1f, 1000.0f);
     for(size_t i=0; i<mesh_box->tris_num; i++){
         Triangle t;
         vec3 tri_vec1 = (*(mesh_box->tris[i])).p[0];
@@ -100,70 +101,58 @@ void mesh_render(float fElapsedTime){
         t.p[2] = tri_vec3;
 
         //Rotate in Z-Axis
-        t.p[0] = MultiplyMatrixVector(t.p[0], global.matRotZ);
-        t.p[1] = MultiplyMatrixVector(t.p[1], global.matRotZ);
-        t.p[2] = MultiplyMatrixVector(t.p[2], global.matRotZ);
-        
+        global.matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
         //Rotate in X-Axis
-        t.p[0] = MultiplyMatrixVector(t.p[0], global.matRotX);
-        t.p[1] = MultiplyMatrixVector(t.p[1], global.matRotX);
-        t.p[2] = MultiplyMatrixVector(t.p[2], global.matRotX);
-        
+        global.matRotX = Matrix_MakeRotationX(fTheta); 
+
         //Offset into the screen
-        t.p[0].z = t.p[0].z + 4.0f;
-        t.p[1].z = t.p[1].z + 4.0f;
-        t.p[2].z = t.p[2].z + 4.0f;
+        Matrix matTrans;
+        matTrans = Matrix_MakeTranslation(0, 0, 4.0f);
 
-        //triangle normal compute for show if facing the camera
-        //triangle normal compute for show if facing the camera
-        line1.x = t.p[1].x - t.p[0].x;
-        line1.y = t.p[1].y - t.p[0].y;
-        line1.z = t.p[1].z - t.p[0].z;
-
-        line2.x = t.p[2].x - t.p[0].x;
-        line2.y = t.p[2].y - t.p[0].y;
-        line2.z = t.p[2].z - t.p[0].z;
-
-        normal.x = line1.y*line2.z -line1.z*line2.y;
-        normal.y = line1.z*line2.x -line1.x*line2.z;
-        normal.z = line1.x*line2.y -line1.y*line2.x;
-
-        float l = sqrtf(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
-        normal.x = normal.x/l; normal.y = normal.y/l; normal.z = normal.z/l;
-
-        //dot product to camera the triangle/normals
-        float alignment =   normal.x * (t.p[0].x - global.g_camera.x) +
-                            normal.y * (t.p[1].y - global.g_camera.y) +
-                            normal.z * (t.p[2].z - global.g_camera.z);
+        Matrix matWorld;
+        matWorld = Matrix_MakeIdentity();
+        matWorld = Matrix_MultiplyMatrix(global.matRotZ, global.matRotX);
+        matWorld = Matrix_MultiplyMatrix(matWorld, matTrans);
 
 
         //triangle normal compute for show if facing the camera
         //triangle normal compute for show if facing the camera
+        line1 = Vec_Subtract(t.p[1], t.p[0]);
+        line2 = Vec_Subtract(t.p[2], t.p[0]);
+
+        normal = Vec_CrossProduct(line1, line2);
+        normal = Vec_Normalise(normal);
+        //triangle normal compute for show if facing the camera
+        //triangle normal compute for show if facing the camera
 
 
-        //triangle not facing camera no compute
-        // if(normal.z<0)
-        if(alignment<0.0f)
+        //triangle not facing camera no computf
+        vec3 vCameraRay = Vec_Subtract(t.p[0], global.g_camera);
+        if(Vec_DotProduct(normal, vCameraRay)<0.0f)
         {
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
             vec3 light_direction = { 0.0f, 0.0f, -1.0f };
-            float l = sqrtf(light_direction.x*light_direction.x + light_direction.y*light_direction.y + light_direction.z*light_direction.z);
-            light_direction.x /= l; light_direction.y /= l; light_direction.z /= l;
+            light_direction = Vec_Normalise(light_direction);
 
 				    // How similar is normal to light direction
-				    float dp = normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z;
+            float dp = Max(0.1f, Vec_DotProduct(light_direction, normal));
 				    t.color = GetColour(dp);
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
 
             //project triangles from 3D --> 2D
-            t.p[0] = MultiplyMatrixVector(t.p[0], *mproj);
-            t.p[1] = MultiplyMatrixVector(t.p[1], *mproj);
-            t.p[2] = MultiplyMatrixVector(t.p[2], *mproj);
+            t.p[0] = Matrix_MultiplyVector(mproj, t.p[0]);
+            t.p[1] = Matrix_MultiplyVector(mproj, t.p[1]);
+            t.p[2] = Matrix_MultiplyVector(mproj, t.p[2]);
+
+            t.p[0] = Vec_Div(t.p[0], 1);  // t.p[0].w = 1;
+            t.p[1] = Vec_Div(t.p[1], 1);  // t.p[0].w = 1;
+            t.p[2] = Vec_Div(t.p[2], 1);  // t.p[0].w = 1;
 
             //Scale into view
-            t.p[0].x += 1.0f;  t.p[0].y += 1.0f;
-            t.p[1].x += 1.0f;  t.p[1].y += 1.0f;
-            t.p[2].x += 1.0f;  t.p[2].y += 1.0f;
+            vec3 vOffsetView = {1,1,0};
+            t.p[0] = Vec_Add(t.p[0], vOffsetView);
+            t.p[1] = Vec_Add(t.p[1], vOffsetView);
+            t.p[2] = Vec_Add(t.p[2], vOffsetView);
             t.p[0].x *= 0.5f*(float)SCREEN_WIDTH;
             t.p[1].x *= 0.5f*(float)SCREEN_WIDTH;
             t.p[2].x *= 0.5f*(float)SCREEN_WIDTH;
@@ -207,7 +196,6 @@ void mesh_render(float fElapsedTime){
     SDL_UpdateWindowSurface(global.g_window);
     SDL_Delay(16);
     mesh_free(mesh_box);
-    free(mproj);
 }
 
 int main(){

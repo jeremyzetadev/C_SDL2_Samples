@@ -113,23 +113,6 @@ void Render_TriangleFill_Old(Triangle t){
     }
 }
 
-float static Min(float x, float y){
-    return x < y ? x : y;
-}
-
-float static Max(float x, float y){
-    return x > y ? x : y;
-}
-
-float static Clamp(float high, float low, float value){
-    if(value > high){
-        return high;
-    } else if(value < low){
-        return low;
-    }
-    return value;
-}
-
 void Render_TriangleFill(Triangle t){
     SDL_PixelFormat* format = global.g_screenSurface->format;
     Uint32* pixels = (Uint32*)global.g_screenSurface->pixels;

@@ -12,41 +12,16 @@ Matrix *mat_create(){
     return m;
 }
 
-Matrix *mat_create_projectionmatrix_sample(){
-    Matrix *matProj = malloc(sizeof(Matrix));
-    // initialize matrix values to 0
-    // can also use memset to initialize matrix to 0
-    for(int i=0; i<4; i++){
-        for(int j=0; j<4; j++){
-            matProj->m[i][j] = 0.0f;
-        }
-    }
+// Matrix *mat_create_projectionmatrix(float near, 
+//                                     float far, 
+//                                     float fFov, 
+//                                     float fAspectRatio)
+// {
+//     Matrix *m = malloc(sizeof(Matrix));
+//     return m;
+// }
 
-    float fNear = 0.1f;
-    float fFar = 1000.0f;
-    float fFov = 90.0f;
-    float fAspectRatio = (float)600 / (float)800;   // height/width
-    float fFovRad = 1.0f / tanf(fFov * 0.5f/180.0f * 3.14159f);
-
-    matProj->m[0][0] = fAspectRatio * fFovRad;
-    matProj->m[1][1] = fFovRad;
-    matProj->m[2][2] = fFar / (fFar- fNear);
-    matProj->m[3][2] = (-fFar * fNear) / (fFar - fNear);
-    matProj->m[2][3] = 1.0f;
-    matProj->m[3][3] = 0.0f;
-    return matProj;
-}
-
-Matrix *mat_create_projectionmatrix(float near, 
-                                    float far, 
-                                    float fFov, 
-                                    float fAspectRatio)
-{
-    Matrix *m = malloc(sizeof(Matrix));
-    return m;
-}
-
-vec3 MultiplyMatrixVector(vec3 i, Matrix m){
+vec3 MultiplyMatrixVector_old(vec3 i, Matrix m){
     vec3 o;
     o.x     = i.x*m.m[0][0] + i.y*m.m[1][0] + i.z*m.m[2][0] + m.m[3][0];
     o.y     = i.x*m.m[0][1] + i.y*m.m[1][1] + i.z*m.m[2][1] + m.m[3][1];
@@ -61,21 +36,135 @@ vec3 MultiplyMatrixVector(vec3 i, Matrix m){
     return o;
 }
 
+vec3 Matrix_MultiplyVector(Matrix m, vec3 i){
+    vec3 v;
+    v.x     = i.x*m.m[0][0] + i.y*m.m[1][0] + i.z*m.m[2][0] + m.m[3][0];
+    v.y     = i.x*m.m[0][1] + i.y*m.m[1][1] + i.z*m.m[2][1] + m.m[3][1];
+    v.z     = i.x*m.m[0][2] + i.y*m.m[1][2] + i.z*m.m[2][2] + m.m[3][2];
+    v.w     = i.x*m.m[0][3] + i.y*m.m[1][3] + i.z*m.m[2][3] + m.m[3][3];
+    return v;
+}
+
+Matrix Matrix_MakeIdentity(){
+    Matrix matrix;
+    for(int i=0; i<4; i++){
+        for(int j=0; j<4; j++){
+            matrix.m[i][j] = 0.0f;
+        }
+    }
+    matrix.m[0][0] = 1.0f;
+    matrix.m[1][1] = 1.0f;
+    matrix.m[2][2] = 1.0f;
+    matrix.m[3][3] = 1.0f;
+    return matrix;
+}
+
+Matrix Matrix_MakeRotationX(float fAngleRad)
+{
+    Matrix matrix = Matrix_MakeIdentity();
+    matrix.m[0][0] = 1.0f;
+    matrix.m[1][1] = cosf(fAngleRad);
+    matrix.m[1][2] = sinf(fAngleRad);
+    matrix.m[2][1] = -sinf(fAngleRad);
+    matrix.m[2][2] = cosf(fAngleRad);
+    matrix.m[3][3] = 1.0f;
+    return matrix;
+}
+
+Matrix Matrix_MakeRotationY(float fAngleRad)
+{
+    Matrix matrix = Matrix_MakeIdentity();
+    matrix.m[0][0] = cosf(fAngleRad);
+    matrix.m[0][2] = sinf(fAngleRad);
+    matrix.m[2][0] = -sinf(fAngleRad);
+    matrix.m[1][1] = 1.0f;
+    matrix.m[2][2] = cosf(fAngleRad);
+    matrix.m[3][3] = 1.0f;
+    return matrix;
+}
+
+Matrix Matrix_MakeRotationZ(float fAngleRad)
+{
+    Matrix matrix =Matrix_MakeIdentity();
+    matrix.m[0][0] = cosf(fAngleRad);
+    matrix.m[0][1] = sinf(fAngleRad);
+    matrix.m[1][0] = -sinf(fAngleRad);
+    matrix.m[1][1] = cosf(fAngleRad);
+    matrix.m[2][2] = 1.0f;
+    matrix.m[3][3] = 1.0f;
+    return matrix;
+}
+
+Matrix Matrix_MakeTranslation(float x, float y, float z)
+{
+    Matrix matrix =Matrix_MakeIdentity();
+    matrix.m[0][0] = 1.0f;
+    matrix.m[1][1] = 1.0f;
+    matrix.m[2][2] = 1.0f;
+    matrix.m[3][3] = 1.0f;
+    matrix.m[3][0] = x;
+    matrix.m[3][1] = y;
+    matrix.m[3][2] = z;
+    return matrix;
+}
+
+Matrix Matrix_MakeProjection(float fFovDegrees, float fAspectRatio, float fNear, float fFar)
+{
+    float fFovRad = 1.0f / tanf(fFovDegrees * 0.5f / 180.0f * 3.14159f);
+    Matrix matrix = Matrix_MakeIdentity();
+    matrix.m[0][0] = fAspectRatio * fFovRad;
+    matrix.m[1][1] = fFovRad;
+    matrix.m[2][2] = fFar / (fFar - fNear);
+    matrix.m[3][2] = (-fFar * fNear) / (fFar - fNear);
+    matrix.m[2][3] = 1.0f;
+    matrix.m[3][3] = 0.0f;
+    return matrix;
+}
+
+Matrix Matrix_MultiplyMatrix(Matrix m1, Matrix m2)
+{
+    Matrix matrix = Matrix_MakeIdentity();
+    for (int c = 0; c < 4; c++)
+        for (int r = 0; r < 4; r++)
+            matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c] + m1.m[r][2] * m2.m[2][c] + m1.m[r][3] * m2.m[3][c];
+    return matrix;
+}
+
 vec3 Vec_Add(vec3 a, vec3 b){
-    vec3 v_res = {a.x+b.x, a.y+b.y};
+    vec3 v_res = (vec3){a.x+b.x, a.y+b.y};
     return v_res;
 }
 
 vec3 Vec_Subtract(vec3 a, vec3 b){
-    vec3 v_res = {a.x-b.x, a.y-b.y};
+    vec3 v_res = (vec3){a.x-b.x, a.y-b.y};
     return v_res;
 }
 
-float DotProduct(vec3 a, vec3 b){
+float Vec_DotProduct(vec3 a, vec3 b){
     return (a.x*b.x) + (a.y*b.y) + (a.z*b.z);
 }
 
-vec3 CrossProduct(vec3 a, vec3 b){
+vec3 Vec_Multiply(vec3 a, float multiplier){
+    vec3 v_multiply = (vec3){a.x/multiplier, a.y/multiplier, a.z/multiplier};
+    return v_multiply;
+}
+
+vec3 Vec_Div(vec3 a, float divisor){
+    vec3 v_div = (vec3){a.x/divisor, a.y/divisor, a.z/divisor};
+    return v_div;
+}
+
+float Vec_Length(vec3 v){
+    return sqrtf(Vec_DotProduct(v,v));
+}
+
+vec3 Vec_Normalise(vec3 v){
+    float l = Vec_Length(v);
+    return (vec3){v.x/l, v.y/l, v.z/l};
+}
+
+
+vec3 Vec_CrossProduct(vec3 a, vec3 b){
     vec3 v_new;
     v_new.x = (a.y*b.z) - (a.z*b.y);
     v_new.y = -((a.x*b.z) - (a.z*b.x));
@@ -93,7 +182,7 @@ vec3 Vec_Perpendicular(vec3 v){
 bool IsPointOnRightSideOfLine(vec3 a, vec3 b, vec3 p){
     vec3 ap = Vec_Subtract(p, a);
     vec3 abPerp = Vec_Perpendicular(Vec_Subtract(b, a));
-    return DotProduct(ap, abPerp) >=0;
+    return Vec_DotProduct(ap, abPerp) >=0;
 }
 
 bool IsPointInTriangle(vec3 a, vec3 b, vec3 c, vec3 p){
