@@ -63,20 +63,6 @@ void mesh_render(float fElapsedTime){
     float fTheta =0;
     fTheta +=(0.002f * fElapsedTime);
 
-		global.matRotZ.m[0][0] = cosf(fTheta);
-		global.matRotZ.m[0][1] = sinf(fTheta);
-		global.matRotZ.m[1][0] = -sinf(fTheta);
-		global.matRotZ.m[1][1] = cosf(fTheta);
-		global.matRotZ.m[2][2] = 1;
-		global.matRotZ.m[3][3] = 1;
-
-    global.matRotX.m[0][0] = 1;
-		global.matRotX.m[1][1] = cosf(fTheta * 0.5f);
-		global.matRotX.m[1][2] = sinf(fTheta * 0.5f);
-		global.matRotX.m[2][1] = -sinf(fTheta * 0.5f);
-		global.matRotX.m[2][2] = cosf(fTheta * 0.5f);
-		global.matRotX.m[3][3] = 1;
-
     // size_t box_triangle_count = 12;
     // Mesh *mesh_box = mesh_create(box_triangle_count);
     // mesh_init_tris_SampleBox(mesh_box);
@@ -91,6 +77,19 @@ void mesh_render(float fElapsedTime){
 
     // Matrix *mproj = mat_create_projectionmatrix_sample();
     Matrix mproj = Matrix_MakeProjection(90.0f, (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH, 0.1f, 1000.0f);
+    //Rotate in Z-Axis
+    global.matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
+    //Rotate in X-Axis
+    global.matRotX = Matrix_MakeRotationX(fTheta); 
+
+    //Offset into the screen
+    Matrix matTrans;
+    matTrans = Matrix_MakeTranslation(0, 0, 4.0f);
+
+    Matrix matWorld;
+    matWorld = Matrix_MakeIdentity();
+    matWorld = Matrix_MultiplyMatrix(&global.matRotZ, &global.matRotX);
+    matWorld = Matrix_MultiplyMatrix(&matWorld, &matTrans);
     for(size_t i=0; i<mesh_box->tris_num; i++){
         Triangle t;
         vec3 tri_vec1 = (*(mesh_box->tris[i])).p[0];
@@ -100,20 +99,9 @@ void mesh_render(float fElapsedTime){
         t.p[1] = tri_vec2;
         t.p[2] = tri_vec3;
 
-        //Rotate in Z-Axis
-        global.matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
-        //Rotate in X-Axis
-        global.matRotX = Matrix_MakeRotationX(fTheta); 
-
-        //Offset into the screen
-        Matrix matTrans;
-        matTrans = Matrix_MakeTranslation(0, 0, 4.0f);
-
-        Matrix matWorld;
-        matWorld = Matrix_MakeIdentity();
-        matWorld = Matrix_MultiplyMatrix(global.matRotZ, global.matRotX);
-        matWorld = Matrix_MultiplyMatrix(matWorld, matTrans);
-
+        t.p[0] = Matrix_MultiplyVector(&matWorld, &t.p[0]);
+        t.p[1] = Matrix_MultiplyVector(&matWorld, &t.p[1]);
+        t.p[2] = Matrix_MultiplyVector(&matWorld, &t.p[2]);
 
         //triangle normal compute for show if facing the camera
         //triangle normal compute for show if facing the camera
@@ -126,7 +114,7 @@ void mesh_render(float fElapsedTime){
         //triangle normal compute for show if facing the camera
 
 
-        //triangle not facing camera no computf
+        //triangle not facing camera 
         vec3 vCameraRay = Vec_Subtract(t.p[0], global.g_camera);
         if(Vec_DotProduct(normal, vCameraRay)<0.0f)
         {
@@ -140,13 +128,13 @@ void mesh_render(float fElapsedTime){
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
 
             //project triangles from 3D --> 2D
-            t.p[0] = Matrix_MultiplyVector(mproj, t.p[0]);
-            t.p[1] = Matrix_MultiplyVector(mproj, t.p[1]);
-            t.p[2] = Matrix_MultiplyVector(mproj, t.p[2]);
+            t.p[0] = Matrix_MultiplyVector(&mproj, &t.p[0]);
+            t.p[1] = Matrix_MultiplyVector(&mproj, &t.p[1]);
+            t.p[2] = Matrix_MultiplyVector(&mproj, &t.p[2]);
 
-            t.p[0] = Vec_Div(t.p[0], 1);  // t.p[0].w = 1;
-            t.p[1] = Vec_Div(t.p[1], 1);  // t.p[0].w = 1;
-            t.p[2] = Vec_Div(t.p[2], 1);  // t.p[0].w = 1;
+            t.p[0] = Vec_Div(t.p[0], t.p[0].w);  // t.p[0].w = 1;
+            t.p[1] = Vec_Div(t.p[1], t.p[1].w);  // t.p[0].w = 1;
+            t.p[2] = Vec_Div(t.p[2], t.p[2].w);  // t.p[0].w = 1;
 
             //Scale into view
             vec3 vOffsetView = {1,1,0};
@@ -194,7 +182,7 @@ void mesh_render(float fElapsedTime){
     }
 
     SDL_UpdateWindowSurface(global.g_window);
-    SDL_Delay(16);
+    // SDL_Delay(16);
     mesh_free(mesh_box);
 }
 

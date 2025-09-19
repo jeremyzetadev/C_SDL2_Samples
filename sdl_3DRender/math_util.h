@@ -10,6 +10,8 @@ typedef struct {
     float w;
 } vec3;
 
+vec3 vec3_init(vec3 v);
+
 typedef struct {
     float m[4][4];
 } Matrix;
@@ -17,14 +19,14 @@ typedef struct {
 Matrix *mat_create();
 // Matrix *mat_create_projectionmatrix_sample();
 vec3 MultiplyMatrixVector_old(vec3 i, Matrix m);
-vec3 Matrix_MultiplyVector(Matrix m, vec3 i);
+vec3 Matrix_MultiplyVector(Matrix *m, vec3 *i);
 Matrix Matrix_MakeIdentity();
 Matrix Matrix_MakeRotationX(float fAngleRad);
 Matrix Matrix_MakeRotationY(float fAngleRad);
 Matrix Matrix_MakeRotationZ(float fAngleRad);
 Matrix Matrix_MakeTranslation(float x, float y, float z);
 Matrix Matrix_MakeProjection(float fFovDegrees, float fAspectRatio, float fNear, float fFar);
-Matrix Matrix_MultiplyMatrix(Matrix m1, Matrix m2);
+Matrix Matrix_MultiplyMatrix(Matrix *m1, Matrix *m2);
 
 vec3 Vec_Add(vec3 a, vec3 b);
 vec3 Vec_Subtract(vec3 a, vec3 b);

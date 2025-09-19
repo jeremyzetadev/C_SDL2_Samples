@@ -7,6 +7,14 @@
 #include "global.h"
 #include <stdint.h>
 
+vec3 vec3_init(vec3 v){
+    v.x = 0;
+    v.x = 0;
+    v.x = 0;
+    v.x = 1;
+    return v;
+}
+
 Matrix *mat_create(){
     Matrix *m = malloc(sizeof(Matrix));
     return m;
@@ -36,12 +44,12 @@ vec3 MultiplyMatrixVector_old(vec3 i, Matrix m){
     return o;
 }
 
-vec3 Matrix_MultiplyVector(Matrix m, vec3 i){
+vec3 Matrix_MultiplyVector(Matrix *m, vec3 *i){
     vec3 v;
-    v.x     = i.x*m.m[0][0] + i.y*m.m[1][0] + i.z*m.m[2][0] + m.m[3][0];
-    v.y     = i.x*m.m[0][1] + i.y*m.m[1][1] + i.z*m.m[2][1] + m.m[3][1];
-    v.z     = i.x*m.m[0][2] + i.y*m.m[1][2] + i.z*m.m[2][2] + m.m[3][2];
-    v.w     = i.x*m.m[0][3] + i.y*m.m[1][3] + i.z*m.m[2][3] + m.m[3][3];
+    v.x     = i->x*m->m[0][0] + i->y*m->m[1][0] + i->z*m->m[2][0] + m->m[3][0];
+    v.y     = i->x*m->m[0][1] + i->y*m->m[1][1] + i->z*m->m[2][1] + m->m[3][1];
+    v.z     = i->x*m->m[0][2] + i->y*m->m[1][2] + i->z*m->m[2][2] + m->m[3][2];
+    v.w     = i->x*m->m[0][3] + i->y*m->m[1][3] + i->z*m->m[2][3] + m->m[3][3];
     return v;
 }
 
@@ -121,22 +129,23 @@ Matrix Matrix_MakeProjection(float fFovDegrees, float fAspectRatio, float fNear,
     return matrix;
 }
 
-Matrix Matrix_MultiplyMatrix(Matrix m1, Matrix m2)
+Matrix Matrix_MultiplyMatrix(Matrix *m1, Matrix *m2)
 {
     Matrix matrix = Matrix_MakeIdentity();
     for (int c = 0; c < 4; c++)
         for (int r = 0; r < 4; r++)
-            matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c] + m1.m[r][2] * m2.m[2][c] + m1.m[r][3] * m2.m[3][c];
+            matrix.m[r][c] = m1->m[r][0] * m2->m[0][c] + m1->m[r][1] * m2->m[1][c] + m1->m[r][2] * m2->m[2][c] + m1->m[r][3] * m2->m[3][c];
     return matrix;
 }
 
+// no need to use pointer ([float]4bytes + [float]4bytes = [pointer]8bytes)
 vec3 Vec_Add(vec3 a, vec3 b){
-    vec3 v_res = (vec3){a.x+b.x, a.y+b.y};
+    vec3 v_res = (vec3){a.x+b.x, a.y+b.y, a.z+b.z};
     return v_res;
 }
 
 vec3 Vec_Subtract(vec3 a, vec3 b){
-    vec3 v_res = (vec3){a.x-b.x, a.y-b.y};
+    vec3 v_res = (vec3){a.x-b.x, a.y-b.y, a.z-b.z};
     return v_res;
 }
 
@@ -167,7 +176,7 @@ vec3 Vec_Normalise(vec3 v){
 vec3 Vec_CrossProduct(vec3 a, vec3 b){
     vec3 v_new;
     v_new.x = (a.y*b.z) - (a.z*b.y);
-    v_new.y = -((a.x*b.z) - (a.z*b.x));
+    v_new.y = (a.z*b.x) - (a.x*b.z);
     v_new.z = (a.x*b.y) - (a.y*b.x);
     return v_new;
 }
