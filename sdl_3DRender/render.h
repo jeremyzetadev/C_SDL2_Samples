@@ -17,3 +17,4 @@ void Render_EditScreenSurfacePixels(enum colorType cType);
 
 void Render_TriangleLines(Triangle t);
 void Render_TriangleFill(Triangle t);
+void Render_TriangleFill_Old(Triangle t);
