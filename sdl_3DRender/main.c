@@ -213,9 +213,12 @@ int main(){
     // SDL_Delay(700);
 
     bool isGameRunning = true;
-    clock_t start, diff;
+    clock_t start, diff, clock_start, clock_end;
+    double frame_time_seconds, fps;
+    int frame_count;
     float fElapsedTime =0;
     start = clock();
+    clock_start = clock();
     init_global_properties();
     while(isGameRunning){
         LockScreenSurface();
@@ -236,6 +239,16 @@ int main(){
         fElapsedTime = diff * 1000.0f / CLOCKS_PER_SEC;
         Render_FillScreenBlue();
         UnlockScreenSurface();
+
+        clock_end = clock();
+        frame_count++;
+        frame_time_seconds = (double)(clock_end - clock_start) / CLOCKS_PER_SEC;
+        if(frame_time_seconds>=1.0){
+            fps = (double)frame_count/frame_time_seconds;
+            SDL_Log("FPS: %f\n", fps);
+            clock_start = clock_end;
+            frame_count = 0;
+        }
     }
 
     // UnlockScreenSurface();
