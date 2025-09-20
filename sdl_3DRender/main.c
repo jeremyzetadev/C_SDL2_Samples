@@ -22,7 +22,7 @@ void InitializeProgram(){
     if(SDL_Init(SDL_INIT_VIDEO) <0)
         ERROR_EXIT("SDL could not initialized, SDL_Error: %s\n" ,SDL_GetError());
 
-    global.g_window = SDL_CreateWindow("Draw Line in Lock Surface", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
+    global.g_window = SDL_CreateWindow("Moving Camera Through 3D Space with rendered rotating obj", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
     if(!global.g_window)
         ERROR_EXIT("g_window could not be created, SDL_Error: %s\n", SDL_GetError());
 
@@ -92,8 +92,20 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime){
     matWorld = Matrix_MakeIdentity();
     matWorld = Matrix_MultiplyMatrix(&global.matRotZ, &global.matRotX);
     matWorld = Matrix_MultiplyMatrix(&matWorld, &matTrans);
+
+    global.vLookDir = (vec3){0, 0, 1};
+    vec3 vUp = (vec3){0, 1, 0};
+    // vec3 vTarget = Vec_Add(global.g_camera, global.vLookDir);
+    vec3 vTarget = (vec3){0, 0, 1};
+    Matrix matCameraRot = Matrix_MakeRotationY(global.fYaw);
+    global.vLookDir = Matrix_MultiplyVector(&matCameraRot, &vTarget); 
+    vTarget = Vec_Add(global.g_camera, global.vLookDir);
+
+    Matrix matCamera = Matrix_PointAt(&global.g_camera, &vTarget, &vUp);
+    Matrix matView = Matrix_QuickInverse(&matCamera);
+
     for(size_t i=0; i<mesh_box->tris_num; i++){
-        Triangle t;
+        Triangle t, tViewed;
         vec3 tri_vec1 = (*(mesh_box->tris[i])).p[0];
         vec3 tri_vec2 = (*(mesh_box->tris[i])).p[1];
         vec3 tri_vec3 = (*(mesh_box->tris[i])).p[2];
@@ -129,10 +141,18 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime){
 				    t.color = GetColour(dp);
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
 
+            // Convert World Space --> View Space
+            tViewed.p[0] = Matrix_MultiplyVector(&matView, &t.p[0]);
+            tViewed.p[1] = Matrix_MultiplyVector(&matView, &t.p[1]);
+            tViewed.p[2] = Matrix_MultiplyVector(&matView, &t.p[2]);
+
             //project triangles from 3D --> 2D
-            t.p[0] = Matrix_MultiplyVector(&mproj, &t.p[0]);
-            t.p[1] = Matrix_MultiplyVector(&mproj, &t.p[1]);
-            t.p[2] = Matrix_MultiplyVector(&mproj, &t.p[2]);
+            // t.p[0] = Matrix_MultiplyVector(&mproj, &t.p[0]);
+            // t.p[1] = Matrix_MultiplyVector(&mproj, &t.p[1]);
+            // t.p[2] = Matrix_MultiplyVector(&mproj, &t.p[2]);
+            t.p[0] = Matrix_MultiplyVector(&mproj, &tViewed.p[0]);
+            t.p[1] = Matrix_MultiplyVector(&mproj, &tViewed.p[1]);
+            t.p[2] = Matrix_MultiplyVector(&mproj, &tViewed.p[2]);
 
             t.p[0] = Vec_Div(t.p[0], t.p[0].w);  // t.p[0].w = 1;
             t.p[1] = Vec_Div(t.p[1], t.p[1].w);  // t.p[0].w = 1;
@@ -206,8 +226,21 @@ void mesh_render_static(Mesh *mesh_box){
     matWorld = Matrix_MakeIdentity();
     // matWorld = Matrix_MultiplyMatrix(&global.matRotZ, &global.matRotX);
     matWorld = Matrix_MultiplyMatrix(&matWorld, &matTrans);
+
+    global.vLookDir = (vec3){0, 0, 1};
+    global.vLookDir = (vec3){0, 0, 1};
+    vec3 vUp = (vec3){0, 1, 0};
+    // vec3 vTarget = Vec_Add(global.g_camera, global.vLookDir);
+    vec3 vTarget = (vec3){0, 0, 1};
+    Matrix matCameraRot = Matrix_MakeRotationY(global.fYaw);
+    global.vLookDir = Matrix_MultiplyVector(&matCameraRot, &vTarget); 
+    vTarget = Vec_Add(global.g_camera, global.vLookDir);
+
+    Matrix matCamera = Matrix_PointAt(&global.g_camera, &vTarget, &vUp);
+    Matrix matView = Matrix_QuickInverse(&matCamera);
+
     for(size_t i=0; i<mesh_box->tris_num; i++){
-        Triangle t;
+        Triangle t, tViewed;
         vec3 tri_vec1 = (*(mesh_box->tris[i])).p[0];
         vec3 tri_vec2 = (*(mesh_box->tris[i])).p[1];
         vec3 tri_vec3 = (*(mesh_box->tris[i])).p[2];
@@ -243,10 +276,18 @@ void mesh_render_static(Mesh *mesh_box){
 				    t.color = GetColour(dp);
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
 
+            // Convert World Space --> View Space
+            tViewed.p[0] = Matrix_MultiplyVector(&matView, &t.p[0]);
+            tViewed.p[1] = Matrix_MultiplyVector(&matView, &t.p[1]);
+            tViewed.p[2] = Matrix_MultiplyVector(&matView, &t.p[2]);
+
             //project triangles from 3D --> 2D
-            t.p[0] = Matrix_MultiplyVector(&mproj, &t.p[0]);
-            t.p[1] = Matrix_MultiplyVector(&mproj, &t.p[1]);
-            t.p[2] = Matrix_MultiplyVector(&mproj, &t.p[2]);
+            // t.p[0] = Matrix_MultiplyVector(&mproj, &t.p[0]);
+            // t.p[1] = Matrix_MultiplyVector(&mproj, &t.p[1]);
+            // t.p[2] = Matrix_MultiplyVector(&mproj, &t.p[2]);
+            t.p[0] = Matrix_MultiplyVector(&mproj, &tViewed.p[0]);
+            t.p[1] = Matrix_MultiplyVector(&mproj, &tViewed.p[1]);
+            t.p[2] = Matrix_MultiplyVector(&mproj, &tViewed.p[2]);
 
             t.p[0] = Vec_Div(t.p[0], t.p[0].w);  // t.p[0].w = 1;
             t.p[1] = Vec_Div(t.p[1], t.p[1].w);  // t.p[0].w = 1;
@@ -345,14 +386,32 @@ int main(){
                 case SDL_QUIT:
                     isGameRunning = false;
                     break;
-                                        
+                case SDL_KEYDOWN:                                        
+                    switch(event.key.keysym.scancode){
+                        case SDL_SCANCODE_A:
+                            global.fYaw += 0.2f;  //*fElapsedTime use time to smooth movement
+                            break;
+                        case SDL_SCANCODE_D:
+                            global.fYaw -= 0.2;
+                            break;
+                        case SDL_SCANCODE_W:
+                            vec3 vForward = Vec_Multiply(global.vLookDir, 0.2f);
+                            global.g_camera = Vec_Add(global.g_camera, vForward);
+                            break;
+                        case SDL_SCANCODE_S:
+                            vec3 vBackward = Vec_Multiply(global.vLookDir, 0.2f);
+                            global.g_camera = Vec_Subtract(global.g_camera, vBackward);
+                            break;
+                        default:
+                            break;
+                    }
                 default:
                     break;
             }
         }
         //mesh render sample
-        // mesh_render(mesh_box, fElapsedTime);
-        mesh_render_static(mesh_box);
+        mesh_render(mesh_box, fElapsedTime);
+        // mesh_render_static(mesh_box);
         diff = clock() - start;
         fElapsedTime = diff * 1000.0f / CLOCKS_PER_SEC;
         Render_FillScreenBlue();
@@ -364,6 +423,9 @@ int main(){
         if(frame_time_seconds>=1.0){
             fps = (double)frame_count/frame_time_seconds;
             SDL_Log("FPS: %f\n", fps);
+            SDL_Log("fEllapsedTime: %f\n", fElapsedTime);
+            SDL_Log("cameraPos: %f\t %f\t %f\n", global.g_camera.x, global.g_camera.y, global.g_camera.z);
+            SDL_Log("viewDirection: %f\t %f\t %f\n", global.vLookDir.x, global.vLookDir.y, global.vLookDir.z);
             clock_start = clock_end;
             frame_count = 0;
         }

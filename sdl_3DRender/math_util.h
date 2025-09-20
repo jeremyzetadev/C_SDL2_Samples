@@ -28,6 +28,9 @@ Matrix Matrix_MakeTranslation(float x, float y, float z);
 Matrix Matrix_MakeProjection(float fFovDegrees, float fAspectRatio, float fNear, float fFar);
 Matrix Matrix_MultiplyMatrix(Matrix *m1, Matrix *m2);
 
+Matrix Matrix_PointAt(vec3 *pos, vec3 *target, vec3 *up);
+Matrix Matrix_QuickInverse(Matrix *m);
+
 vec3 Vec_Add(vec3 a, vec3 b);
 vec3 Vec_Subtract(vec3 a, vec3 b);
 vec3 Vec_Multiply(vec3 a, float multiplier);

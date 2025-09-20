@@ -10,7 +10,10 @@ typedef struct{
     Matrix matRotX;
     Matrix matRotZ;
     vec3 g_camera;
+    vec3 vLookDir;
     char *objFile;
+
+    float fYaw;
 } Global;
 
 extern Global global;

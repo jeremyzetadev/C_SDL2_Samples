@@ -138,6 +138,38 @@ Matrix Matrix_MultiplyMatrix(Matrix *m1, Matrix *m2)
     return matrix;
 }
 
+// in tutorial of javidx, he use reference(c++) so he can pass-byref and calc as object
+Matrix Matrix_PointAt(vec3 *pos, vec3 *target, vec3 *up){
+    vec3 newForward = Vec_Subtract(*target, *pos);
+    newForward = Vec_Normalise(newForward);
+
+    vec3 a = Vec_Multiply(newForward, Vec_DotProduct(*up, newForward));
+    vec3 newUp = Vec_Subtract(*up, a);
+    newUp = Vec_Normalise(newUp);
+
+    vec3 newRight = Vec_CrossProduct(newUp, newForward);
+
+    Matrix mat = Matrix_MakeIdentity();
+    mat.m[0][0] = newRight.x;        mat.m[0][1]=newRight.y;      mat.m[0][2]=newRight.z;
+    mat.m[1][0] = newUp.x;           mat.m[1][1]=newUp.y;         mat.m[1][2]=newUp.z;
+    mat.m[2][0] = newForward.x;      mat.m[2][1]=newForward.y;    mat.m[2][2]=newForward.z;
+    mat.m[3][0] = pos->x;             mat.m[3][1]=pos->y;           mat.m[3][2]=pos->z;
+
+    return mat;
+}
+
+Matrix Matrix_QuickInverse(Matrix *m){
+    Matrix mat = Matrix_MakeIdentity();
+		mat.m[0][0] = m->m[0][0]; mat.m[0][1] = m->m[1][0]; mat.m[0][2] = m->m[2][0]; mat.m[0][3] = 0.0f;
+		mat.m[1][0] = m->m[0][1]; mat.m[1][1] = m->m[1][1]; mat.m[1][2] = m->m[2][1]; mat.m[1][3] = 0.0f;
+		mat.m[2][0] = m->m[0][2]; mat.m[2][1] = m->m[1][2]; mat.m[2][2] = m->m[2][2]; mat.m[2][3] = 0.0f;
+		mat.m[3][0] = -(m->m[3][0] * mat.m[0][0] + m->m[3][1] * mat.m[1][0] + m->m[3][2] * mat.m[2][0]);
+		mat.m[3][1] = -(m->m[3][0] * mat.m[0][1] + m->m[3][1] * mat.m[1][1] + m->m[3][2] * mat.m[2][1]);
+		mat.m[3][2] = -(m->m[3][0] * mat.m[0][2] + m->m[3][1] * mat.m[1][2] + m->m[3][2] * mat.m[2][2]);
+		mat.m[3][3] = 1.0f;
+    return mat;
+}
+
 // no need to use pointer ([float]4bytes + [float]4bytes = [pointer]8bytes)
 vec3 Vec_Add(vec3 a, vec3 b){
     vec3 v_res = (vec3){a.x+b.x, a.y+b.y, a.z+b.z};
@@ -154,7 +186,7 @@ float Vec_DotProduct(vec3 a, vec3 b){
 }
 
 vec3 Vec_Multiply(vec3 a, float multiplier){
-    vec3 v_multiply = (vec3){a.x/multiplier, a.y/multiplier, a.z/multiplier};
+    vec3 v_multiply = (vec3){a.x*multiplier, a.y*multiplier, a.z*multiplier, a.w*multiplier};
     return v_multiply;
 }
 
