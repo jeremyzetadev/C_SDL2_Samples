@@ -21,7 +21,7 @@ void Render_LineScreenSurface(vec3 v_start, vec3 v_end){
     for(int i=0; i<steps; i++){
         int v_x_trail = v_start.x + (i * step_x);
         int v_y_trail = v_start.y + (i * step_y);
-        if((v_y_trail*pitch + v_x_trail) >=0){
+        if((v_y_trail*pitch + v_x_trail) >=0 && (v_y_trail*pitch + v_x_trail < width*height)){
             pixels[v_y_trail*pitch +v_x_trail] = colorBlack;
         }
     }
@@ -159,8 +159,8 @@ void Render_TriangleFill(Triangle t){
         for (int x = minX; x < maxX; ++x) {
             vec3 v_pixel;
             v_pixel.x = x; v_pixel.y = y;
-            if(IsPointInTriangle(t.p[0], t.p[1], t.p[2], v_pixel)){
-                if((y*pitch +x)>0){
+            if((y*pitch +x)>0 && ((y*pitch +x)<width*height)){
+                if(IsPointInTriangle(t.p[0], t.p[1], t.p[2], v_pixel)){
                     // pixels[y*pitch +x] = colorOrange;
                     pixels[y*pitch +x] = t.color;
                 }

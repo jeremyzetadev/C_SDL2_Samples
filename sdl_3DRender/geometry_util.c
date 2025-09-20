@@ -3,6 +3,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include"global.h"
 
 Mesh *mesh_create(size_t tris_num){
     Mesh *m = malloc(sizeof(Mesh));
@@ -80,7 +81,8 @@ Mesh *mesh_create_loadfromObj(){
 
     FILE *fptr = NULL;
     char myString[100];
-    fptr = fopen("blender_legacyobj.obj", "r");
+    // fptr = fopen("blender_legacyobj.obj", "r");
+    fptr = fopen(global.objFile, "r");
     if(fptr!=NULL){
         size_t tris_num = 0;
         while(fgets(myString, 100, fptr)){
@@ -92,7 +94,8 @@ Mesh *mesh_create_loadfromObj(){
     fclose(fptr);
 
     FILE *fptr2 = NULL;
-    fptr2 = fopen("blender_legacyobj.obj", "r");
+    // fptr2 = fopen("blender_legacyobj.obj", "r");
+    fptr2 = fopen(global.objFile, "r");
     if(fptr2!=NULL){
         size_t vertices_num = 0;
         while(fgets(myString, 100, fptr2)){
@@ -129,7 +132,7 @@ int mesh_loadfrom_Obj(Mesh *mesh){
     // }
     // fclose(fptr);
 
-    fptr2 = fopen("blender_legacyobj.obj", "r");
+    fptr2 = fopen(global.objFile, "r");
     if(fptr2!=NULL){
         while(fgets(myString, 100, fptr2)){
             float v_x, v_y, v_z;
