@@ -199,7 +199,8 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime){
     int numElements = sizeof(ArrTri_To_Render) / sizeof(Triangle);
     qsort(ArrTri_To_Render, numElements, sizeof(Triangle), compareMyStructs);
     for(int i=0; i<sizeToRenderTri; i++){
-        Render_TriangleFill(ArrTri_To_Render[i]);
+        // Render_TriangleFill(ArrTri_To_Render[i]);
+        Render_TriangleFill_ScanLine2(ArrTri_To_Render[i]);
         Render_TriangleLines(ArrTri_To_Render[i]);
     }
 
@@ -334,7 +335,8 @@ void mesh_render_static(Mesh *mesh_box){
     int numElements = sizeof(ArrTri_To_Render) / sizeof(Triangle);
     qsort(ArrTri_To_Render, numElements, sizeof(Triangle), compareMyStructs);
     for(int i=0; i<sizeToRenderTri; i++){
-        Render_TriangleFill(ArrTri_To_Render[i]);
+        // Render_TriangleFill(ArrTri_To_Render[i]);
+        Render_TriangleFill_ScanLine2(ArrTri_To_Render[i]);
         Render_TriangleLines(ArrTri_To_Render[i]);
     }
 
