@@ -61,7 +61,7 @@ void init_global_properties(){
     global.objFile = "blender_legacyobj.obj";
 }
 
-void mesh_render(Mesh *mesh_box, float fElapsedTime){
+void mesh_render(Mesh *mesh_box, float fElapsedTime, vec3 dirOffset){
     float fTheta =0;
     fTheta +=(0.002f * fElapsedTime);
 
@@ -84,9 +84,10 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime){
     //Rotate in X-Axis
     global.matRotX = Matrix_MakeRotationX(fTheta); 
 
-    //Offset into the screen
+    //Offset into the screen or movement
     Matrix matTrans;
-    matTrans = Matrix_MakeTranslation(0, 0, 4.0f);
+    matTrans = Matrix_MakeIdentity();
+    matTrans = Matrix_MakeTranslation(dirOffset.x, dirOffset.y, dirOffset.z);
 
     Matrix matWorld;
     matWorld = Matrix_MakeIdentity();
@@ -208,7 +209,7 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime){
     // SDL_Delay(16);
 }
 
-void mesh_render_static(Mesh *mesh_box){
+void mesh_render_static(Mesh *mesh_box, vec3 dirOffset){
 
     //Mesh triangles
     vec3 normal, line1, line2;
@@ -219,9 +220,10 @@ void mesh_render_static(Mesh *mesh_box){
     // Matrix *mproj = mat_create_projectionmatrix_sample();
     Matrix mproj = Matrix_MakeProjection(90.0f, (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH, 0.1f, 1000.0f);
 
-    //Offset into the screen
+    //Offset into the screen or movement
     Matrix matTrans;
-    matTrans = Matrix_MakeTranslation(0, 0, 4.0f);
+    matTrans = Matrix_MakeIdentity();
+    matTrans = Matrix_MakeTranslation(dirOffset.x, dirOffset.y, dirOffset.z);
 
     Matrix matWorld;
     matWorld = Matrix_MakeIdentity();
@@ -378,8 +380,17 @@ int main(){
     start = clock();
     clock_start = clock();
     init_global_properties();
+
     Mesh *mesh_box = mesh_create_loadfromObj();
     mesh_loadfrom_Obj(mesh_box);
+    // mesh_transform_translate(mesh_box, (vec3){0.0f, 0.0f, 10.0f});
+    Mesh *mesh_box2 = mesh_create_loadfromObj();
+    mesh_loadfrom_Obj(mesh_box2);
+    // mesh_transform_translate(mesh_box2, (vec3){4.0f, 0.0f, 4.0f});
+    Mesh *mesh_box3 = mesh_create_loadfromObj();
+    mesh_loadfrom_Obj(mesh_box3);
+    // mesh_transform_translate(mesh_box3, (vec3){-4.0f, 0.0f, 4.0f});
+
     while(isGameRunning){
         LockScreenSurface();
         SDL_Event event;
@@ -412,7 +423,9 @@ int main(){
             }
         }
         //mesh render sample
-        mesh_render(mesh_box, fElapsedTime);
+        mesh_render(mesh_box, fElapsedTime, (vec3){0.0f, 0.0f, 7.0f});
+        mesh_render(mesh_box2, fElapsedTime, (vec3){4.0f, 0.0f, 7.0f});
+        mesh_render(mesh_box3, fElapsedTime, (vec3){-4.0f, 0.0f, 7.0f});
         // mesh_render_static(mesh_box);
         diff = clock() - start;
         fElapsedTime = diff * 1000.0f / CLOCKS_PER_SEC;
@@ -435,6 +448,8 @@ int main(){
 
     // UnlockScreenSurface();
     mesh_free(mesh_box);
+    mesh_free(mesh_box2);
+    mesh_free(mesh_box3);
     SDL_Delay(3000);
     SDL_DestroyWindow(global.g_window);
     SDL_Quit();

@@ -67,6 +67,20 @@ Matrix Matrix_MakeIdentity(){
     return matrix;
 }
 
+Matrix Matrix_MakeIdentity_W0(){
+    Matrix matrix;
+    for(int i=0; i<4; i++){
+        for(int j=0; j<4; j++){
+            matrix.m[i][j] = 0.0f;
+        }
+    }
+    matrix.m[0][0] = 1.0f;
+    matrix.m[1][1] = 1.0f;
+    matrix.m[2][2] = 1.0f;
+    matrix.m[3][3] = 1.0f;
+    return matrix;
+}
+
 Matrix Matrix_MakeRotationX(float fAngleRad)
 {
     Matrix matrix = Matrix_MakeIdentity();
@@ -272,6 +286,8 @@ Uint32 GetColour(float lum)
 		case 10: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 200, 0); break;
 		case 11: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 210, 0); break;
 		case 12: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 220, 0); break;
+
+		default: colorOrange = SDL_MapRGB(global.g_screenSurface->format, 255, 100, 0); break;
 	}
     return colorOrange;
 }

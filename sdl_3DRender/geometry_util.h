@@ -20,3 +20,4 @@ void mesh_init_tris_SampleBox(Mesh *mesh);
 void mesh_free(Mesh *mesh);
 int mesh_loadfrom_Obj(Mesh *mesh);
 Mesh *mesh_create_loadfromObj();
+void mesh_transform_translate(Mesh *mesh, vec3 dir);

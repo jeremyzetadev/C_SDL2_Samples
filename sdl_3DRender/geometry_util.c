@@ -222,7 +222,26 @@ int mesh_loadfrom_Obj(Mesh *mesh){
     return 0;
 }
 
+// TODO: NG need to have self matrix dont move position(always reflect at origin) move by matrix
+// TODO: NG because it moves from the world and at matrix multiplication it rotates at world not at its axis
+// change position/matrix-pos of current mesh
+void mesh_transform_translate(Mesh *mesh, vec3 dir){
+    Matrix matTrans;
+    matTrans = Matrix_MakeTranslation(dir.x, dir.y, dir.z);
 
+    Matrix matWorld;
+    matWorld = Matrix_MakeIdentity();
+    matWorld = Matrix_MultiplyMatrix(&matWorld, &matTrans);
+    for(size_t i=0; i<mesh->tris_num; i++){
+        //direct access without using triangle
+        vec3 *ptr_tri_vec1 = &(*(mesh->tris[i])).p[0];
+        vec3 *ptr_tri_vec2 = &(*(mesh->tris[i])).p[1];
+        vec3 *ptr_tri_vec3 = &(*(mesh->tris[i])).p[2];
+        *ptr_tri_vec1 = Matrix_MultiplyVector(&matWorld, ptr_tri_vec1);
+        *ptr_tri_vec2 = Matrix_MultiplyVector(&matWorld, ptr_tri_vec2);
+        *ptr_tri_vec3 = Matrix_MultiplyVector(&matWorld, ptr_tri_vec3);
+    }
+}
 
 
 

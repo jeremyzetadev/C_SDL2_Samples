@@ -21,6 +21,7 @@ Matrix *mat_create();
 vec3 MultiplyMatrixVector_old(vec3 i, Matrix m);
 vec3 Matrix_MultiplyVector(Matrix *m, vec3 *i);
 Matrix Matrix_MakeIdentity();
+Matrix Matrix_MakeIdentity_W0();
 Matrix Matrix_MakeRotationX(float fAngleRad);
 Matrix Matrix_MakeRotationY(float fAngleRad);
 Matrix Matrix_MakeRotationZ(float fAngleRad);
