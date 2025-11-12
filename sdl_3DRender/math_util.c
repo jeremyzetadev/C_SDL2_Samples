@@ -251,10 +251,10 @@ int compareMyStructs(const void *a, const void *b) {
     const Triangle *tA = (const Triangle *)a;
     const Triangle *tB = (const Triangle *)b;
 
-    float z1 = (tA->p[0].z + tA->p[1].z + tA->p[2].z)/3;
-    float z2 = (tB->p[0].z + tB->p[1].z + tB->p[2].z)/3;
+    float z1 = (tA->p[0].z + tA->p[1].z + tA->p[2].z)/3.0f;
+    float z2 = (tB->p[0].z + tB->p[1].z + tB->p[2].z)/3.0f;
     
-    return z1>z2;
+    return z1<z2;
     // if(z1<z2){
     //     return -1;
     // } else if(z1>z2){
@@ -262,6 +262,12 @@ int compareMyStructs(const void *a, const void *b) {
     // } else {
     //     return 0;
     // }
+}
+
+int compareInt(const void *a, const void *b){
+      const int *valA = (const int *)a;
+      const int *valB = (const int *)b;
+      return *valA - *valB;
 }
 
 Uint32 GetColour(float lum)

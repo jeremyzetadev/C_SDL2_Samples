@@ -47,6 +47,7 @@ bool IsPointInTriangle(vec3 a, vec3 b, vec3 c, vec3 p);
 
 Uint32 GetColour(float lum);
 int compareMyStructs(const void *a, const void *b);
+int compareInt(const void *a, const void *b);
 
 float static Min(float x, float y){
     return x < y ? x : y;

@@ -196,7 +196,7 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime, vec3 dirOffset){
         }
     }
 
-    // sort through z
+    // sort through z (render from back to front)
     int numElements = sizeof(ArrTri_To_Render) / sizeof(Triangle);
     qsort(ArrTri_To_Render, numElements, sizeof(Triangle), compareMyStructs);
     for(int i=0; i<sizeToRenderTri; i++){
@@ -205,7 +205,7 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime, vec3 dirOffset){
         Render_TriangleLines(ArrTri_To_Render[i]);
     }
 
-    SDL_UpdateWindowSurface(global.g_window);
+    // SDL_UpdateWindowSurface(global.g_window); ---> move to before render
     // SDL_Delay(16);
 }
 
@@ -333,7 +333,7 @@ void mesh_render_static(Mesh *mesh_box, vec3 dirOffset){
         }
     }
 
-    // sort through z
+    // sort through z (render from back to front)
     int numElements = sizeof(ArrTri_To_Render) / sizeof(Triangle);
     qsort(ArrTri_To_Render, numElements, sizeof(Triangle), compareMyStructs);
     for(int i=0; i<sizeToRenderTri; i++){
@@ -342,7 +342,7 @@ void mesh_render_static(Mesh *mesh_box, vec3 dirOffset){
         Render_TriangleLines(ArrTri_To_Render[i]);
     }
 
-    SDL_UpdateWindowSurface(global.g_window);
+    // SDL_UpdateWindowSurface(global.g_window); ---> move to before render
     // SDL_Delay(16);
 }
 
@@ -426,6 +426,7 @@ int main(){
         mesh_render(mesh_box, fElapsedTime, (vec3){0.0f, 0.0f, 7.0f});
         mesh_render(mesh_box2, fElapsedTime, (vec3){4.0f, 0.0f, 7.0f});
         mesh_render(mesh_box3, fElapsedTime, (vec3){-4.0f, 0.0f, 7.0f});
+        SDL_UpdateWindowSurface(global.g_window); 
         // mesh_render_static(mesh_box);
         diff = clock() - start;
         fElapsedTime = diff * 1000.0f / CLOCKS_PER_SEC;
