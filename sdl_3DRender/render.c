@@ -184,17 +184,28 @@ void Render_TriangleFill(Triangle t){
 
 void swap_int(int *a, int *b) {
     int temp; 
-
     temp = *a; 
     *a = *b;  
     *b = temp; 
 }
 
-void swap(void *a, void *b) {
+void swap_ng(void *a, void *b) {
     void *temp; 
-    temp = &a; 
-    a = &b;  
+    temp = a; 
+    a = b;  
     b = temp; 
+}
+
+void swap_generic(void *a, void *b, size_t size){
+    void *temp = malloc(size);
+    if (temp == NULL) {
+        fprintf(stderr, "Memory allocation failed in generic_swap.\n");
+        exit(EXIT_FAILURE);
+    }
+    memcpy(temp, a, size);
+    memcpy(a, b, size);
+    memcpy(b, temp, size);
+    free(temp);
 }
 
 void DrawHorizontalLine(int x_start, int x_end, int y, size_t color) {
@@ -315,9 +326,9 @@ void Render_TriangleFill_ScanLine(Triangle t){
     vec3 p1 = t.p[0];
     vec3 p2 = t.p[1];
     vec3 p3 = t.p[2];
-    if (p1.y > p2.y) swap(&p1, &p2);
-    if (p1.y > p3.y) swap(&p1, &p3);
-    if (p2.y > p3.y) swap(&p2, &p3);
+    if (p1.y > p2.y) swap_generic(&p1, &p2, sizeof(p1));
+    if (p1.y > p3.y) swap_generic(&p1, &p3, sizeof(p1));
+    if (p2.y > p3.y) swap_generic(&p2, &p3, sizeof(p2));
     vec3 pTop = p1, pMid = p2, pBottom = p3;
     
     // Handle degenerate cases (e.g., area == 0 or horizontal line)
@@ -354,9 +365,9 @@ void Render_TriangleFill_ScanLine2(Triangle t)
     int signx1, signx2, dx1, dy1, dx2, dy2;
     int e1, e2;
     // Sort vertices
-    if (y1>y2) { swap_int(&y1, &y2); swap_int(&x1, &x2); }
-    if (y1>y3) { swap_int(&y1, &y3); swap_int(&x1, &x3); }
-    if (y2>y3) { swap_int(&y2, &y3); swap_int(&x2, &x3); }
+    if (y1>y2) { swap_generic(&y1, &y2, sizeof(y1)); swap_generic(&x1, &x2, sizeof(x1)); }
+    if (y1>y3) { swap_generic(&y1, &y3, sizeof(y1)); swap_generic(&x1, &x3, sizeof(x1)); }
+    if (y2>y3) { swap_generic(&y2, &y3, sizeof(y2)); swap_generic(&x2, &x3, sizeof(x2)); }
 
     t1x = t2x = x1; y = y1;   // Starting points
     dx1 = (int)(x2 - x1); 
@@ -369,12 +380,12 @@ void Render_TriangleFill_ScanLine2(Triangle t)
     else signx2 = 1;
     dy2 = (int)(y3 - y1);
 
-    if (dy1 > dx1) {   // swap_int values
-        swap_int(&dx1, &dy1);
+    if (dy1 > dx1) {   // swap_generic values
+        swap_generic(&dx1, &dy1, sizeof(dx1));
         changed1 = true;
     }
-    if (dy2 > dx2) {   // swap_int values
-        swap_int(&dy2, &dx2);
+    if (dy2 > dx2) {   // swap_generic values
+        swap_generic(&dy2, &dx2, sizeof(dy2));
         changed2 = true;
     }
 
