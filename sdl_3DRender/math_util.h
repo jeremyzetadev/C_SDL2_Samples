@@ -1,5 +1,5 @@
 #pragma once
-#include<stdbool.h>
+#include <stdbool.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_pixels.h>
 
@@ -42,11 +42,15 @@ float Vec_DotProduct(vec3 a, vec3 b);
 vec3 Vec_CrossProduct(vec3 a, vec3 b);
 vec3 Vec_Perpendicular(vec3 v);
 
+float dist_point_triangle(vec3 *plane_n, vec3 *plane_p, vec3 p);
+vec3 Vec_IntersectPlane(vec3 *plane_p, vec3 *plane_n, vec3 *lineStart, vec3 *lineEnd);
+
 bool IsPointOnRightSideOfLine(vec3 a, vec3 b, vec3 p);
 bool IsPointInTriangle(vec3 a, vec3 b, vec3 c, vec3 p);
 
 Uint32 GetColour(float lum);
 int compareMyStructs(const void *a, const void *b);
+int compareMyPtr(const void *a, const void *b);
 int compareInt(const void *a, const void *b);
 
 float static Min(float x, float y){

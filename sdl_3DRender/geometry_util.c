@@ -76,13 +76,13 @@ void mesh_free(Mesh *mesh){
 }
 
 
-Mesh *mesh_create_loadfromObj(){
+Mesh *mesh_create_loadfromObj(char *objFile){
     Mesh *mesh = malloc(sizeof(Mesh));
 
     FILE *fptr = NULL;
     char myString[100];
     // fptr = fopen("blender_legacyobj.obj", "r");
-    fptr = fopen(global.objFile, "r");
+    fptr = fopen(objFile, "r");
     if(fptr!=NULL){
         size_t tris_num = 0;
         while(fgets(myString, 100, fptr)){
@@ -95,7 +95,7 @@ Mesh *mesh_create_loadfromObj(){
 
     FILE *fptr2 = NULL;
     // fptr2 = fopen("blender_legacyobj.obj", "r");
-    fptr2 = fopen(global.objFile, "r");
+    fptr2 = fopen(objFile, "r");
     if(fptr2!=NULL){
         size_t vertices_num = 0;
         while(fgets(myString, 100, fptr2)){
@@ -109,7 +109,7 @@ Mesh *mesh_create_loadfromObj(){
     return mesh;
 }
 
-int mesh_loadfrom_Obj(Mesh *mesh){
+int mesh_loadfrom_Obj(Mesh *mesh, char *objFile){
     
     // FILE *fptr = NULL;
     FILE *fptr2 = NULL;
@@ -132,7 +132,7 @@ int mesh_loadfrom_Obj(Mesh *mesh){
     // }
     // fclose(fptr);
 
-    fptr2 = fopen(global.objFile, "r");
+    fptr2 = fopen(objFile, "r");
     if(fptr2!=NULL){
         while(fgets(myString, 100, fptr2)){
             float v_x, v_y, v_z;
@@ -242,6 +242,106 @@ void mesh_transform_translate(Mesh *mesh, vec3 dir){
         *ptr_tri_vec3 = Matrix_MultiplyVector(&matWorld, ptr_tri_vec3);
     }
 }
+
+float dist_point_triangle(vec3 *plane_p, vec3 *plane_n, vec3 p){
+    vec3 n = Vec_Normalise(p);
+    return (float)(plane_n->x*p.x + plane_n->y*p.y + plane_n->z*p.z - Vec_DotProduct(*plane_n, *plane_p));
+}
+
+int Triangle_ClipAgainstPlane(vec3 *plane_p, vec3 *plane_n, Triangle *in_tri, Triangle *out_tri1, Triangle *out_tri2){
+    *plane_n = Vec_Normalise(*plane_n);
+    vec3 *inside_points[3]; int nInsidePointCount = 0;
+    vec3 *outside_points[3]; int nOutsidePointCount = 0;
+
+    float d0 = dist_point_triangle(plane_p, plane_n, in_tri->p[0]);
+    float d1 = dist_point_triangle(plane_p, plane_n, in_tri->p[1]);
+    float d2 = dist_point_triangle(plane_p, plane_n, in_tri->p[2]);
+
+    if (d0 >= 0) { inside_points[nInsidePointCount++] = &in_tri->p[0]; }
+    else { outside_points[nOutsidePointCount++] = &in_tri->p[0]; }
+    if (d1 >= 0) { inside_points[nInsidePointCount++] = &in_tri->p[1]; }
+    else { outside_points[nOutsidePointCount++] = &in_tri->p[1]; }
+    if (d2 >= 0) { inside_points[nInsidePointCount++] = &in_tri->p[2]; }
+    else { outside_points[nOutsidePointCount++] = &in_tri->p[2]; }
+
+    if (nInsidePointCount == 0)
+    {
+      // All points lie on the outside of plane, so clip whole triangle
+      // It ceases to exist
+
+      return 0; // No returned triangles are valid
+    }
+
+    if (nInsidePointCount == 3)
+    {
+      // All points lie on the inside of plane, so do nothing
+      // and allow the triangle to simply pass through
+
+      // out_tri1 = in_tri; --> error when out of function values goes back
+      // *out_tri1 = *in_tri;  --> error when out of function values goes back
+      // [use assignment for each primitve val, byval]
+      out_tri1->p[0] = in_tri->p[0];
+      out_tri1->p[1] = in_tri->p[1];
+      out_tri1->p[2] = in_tri->p[2];
+      out_tri1->color = in_tri->color;
+
+      return 1; // Just the one returned original triangle is valid
+    }
+
+    if (nInsidePointCount == 1 && nOutsidePointCount == 2)
+    {
+        // Triangle should be clipped. As two points lie outside
+        // the plane, the triangle simply becomes a smaller triangle
+
+        // Copy appearance info to new triangle
+        out_tri1->color =  in_tri->color;
+
+        // The inside point is valid, so keep that...
+        out_tri1->p[0] = *inside_points[0];
+
+        // but the two new points are at the locations where the 
+        // original sides of the triangle (lines) intersect with the plane
+        out_tri1->p[1] = Vec_IntersectPlane(plane_p, plane_n, inside_points[0], outside_points[0]);
+        out_tri1->p[2] = Vec_IntersectPlane(plane_p, plane_n, inside_points[0], outside_points[1]);
+
+        return 1; // Return the newly formed single triangle
+    }
+
+
+    if (nInsidePointCount == 2 && nOutsidePointCount == 1)
+    {
+        // Triangle should be clipped. As two points lie inside the plane,
+        // the clipped triangle becomes a "quad". Fortunately, we can
+        // represent a quad with two new triangles
+
+        // Copy appearance info to new triangles
+        out_tri1->color =  in_tri->color;
+        out_tri2->color =  in_tri->color;
+
+        // The first triangle consists of the two inside points and a new
+        // point determined by the location where one side of the triangle
+        // intersects with the plane
+        out_tri1->p[0] = *inside_points[0];
+        out_tri1->p[1] = *inside_points[1];
+        out_tri1->p[2] = Vec_IntersectPlane(plane_p, plane_n, inside_points[0], outside_points[0]);
+
+        // The second triangle is composed of one of he inside points, a
+        // new point determined by the intersection of the other side of the 
+        // triangle and the plane, and the newly created point above
+        out_tri2->p[0] = *inside_points[1];
+        out_tri2->p[1] = out_tri1->p[2];
+        out_tri2->p[2] = Vec_IntersectPlane(plane_p, plane_n, inside_points[1], outside_points[0]);
+
+        return 2; // Return two newly formed triangles which form a quad
+    }
+}
+
+
+
+
+
+
+
 
 
 

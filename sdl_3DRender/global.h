@@ -11,7 +11,9 @@ typedef struct{
     Matrix matRotZ;
     vec3 g_camera;
     vec3 vLookDir;
-    char *objFile;
+    char *objFile_extrudebox;
+    char *objFile_mountains;
+    int max_distance_sight;
 
     float fYaw;
 } Global;

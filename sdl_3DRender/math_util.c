@@ -234,6 +234,19 @@ vec3 Vec_Perpendicular(vec3 v){
     return v_perp;
 }
 
+
+vec3 Vec_IntersectPlane(vec3 *plane_p, vec3 *plane_n, vec3 *lineStart, vec3 *lineEnd){
+    *plane_n = Vec_Normalise(*plane_n);
+    float plane_d = -Vec_DotProduct(*plane_n, *plane_p);
+    float ad = Vec_DotProduct(*lineStart, *plane_n);
+    float bd = Vec_DotProduct(*lineEnd, *plane_n);
+    float t = (-plane_d -ad) / (bd - ad);
+    vec3 lineStartToEnd = Vec_Subtract(*lineEnd, *lineStart);
+    vec3 lineToIntersect = Vec_Multiply(lineStartToEnd, t);
+    return Vec_Add(*lineStart, lineToIntersect);
+}
+
+
 bool IsPointOnRightSideOfLine(vec3 a, vec3 b, vec3 p){
     vec3 ap = Vec_Subtract(p, a);
     vec3 abPerp = Vec_Perpendicular(Vec_Subtract(b, a));
@@ -250,6 +263,23 @@ bool IsPointInTriangle(vec3 a, vec3 b, vec3 c, vec3 p){
 int compareMyStructs(const void *a, const void *b) {
     const Triangle *tA = (const Triangle *)a;
     const Triangle *tB = (const Triangle *)b;
+
+    float z1 = (tA->p[0].z + tA->p[1].z + tA->p[2].z)/3.0f;
+    float z2 = (tB->p[0].z + tB->p[1].z + tB->p[2].z)/3.0f;
+    
+    return z1<z2;
+    // if(z1<z2){
+    //     return -1;
+    // } else if(z1>z2){
+    //     return 1;
+    // } else {
+    //     return 0;
+    // }
+}
+
+int compareMyPtr(const void *a, const void *b) {
+    const Triangle *tA = *(const Triangle **)a;
+    const Triangle *tB = *(const Triangle **)b;
 
     float z1 = (tA->p[0].z + tA->p[1].z + tA->p[2].z)/3.0f;
     float z2 = (tB->p[0].z + tB->p[1].z + tB->p[2].z)/3.0f;

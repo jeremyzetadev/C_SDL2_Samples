@@ -89,7 +89,7 @@ void Render_EditScreenSurfacePixel(enum colorType cType){
 }
 
 
-void Render_TriangleLines(Triangle t){
+void Render_TriangleLines(const Triangle t){
     Render_LineScreenSurface(t.p[0], t.p[1]);
     Render_LineScreenSurface(t.p[1], t.p[2]);
     Render_LineScreenSurface(t.p[2], t.p[0]);
@@ -351,7 +351,7 @@ void Render_TriangleFill_ScanLine(Triangle t){
     FillFlatTopTriangle(pMid, p4, pBottom, t.color);
 }
 
-void Render_TriangleFill_ScanLine2(Triangle t)
+void Render_TriangleFill_ScanLine2(const Triangle t)
 {
     int x1 = t.p[0].x;
     int x2 = t.p[1].x;

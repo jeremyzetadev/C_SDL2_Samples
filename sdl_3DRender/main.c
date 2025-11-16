@@ -11,6 +11,7 @@
 #include "math_util.h"
 #include "render.h"
 #include "global.h"
+#include "arraylist.h"
 
 #define ERROR_EXIT(...) {fprintf(stderr, __VA_ARGS__); exit(1);}
 #define SCREEN_WIDTH 800
@@ -58,24 +59,19 @@ void init_global_properties(){
     }
     global.g_camera = (vec3){0, 0, 0};
     // global.objFile = "axis.obj";
-    global.objFile = "blender_legacyobj.obj";
+    global.objFile_extrudebox = "blender_legacyobj.obj";
+    global.objFile_mountains = "blender_legacymountain.obj";
+    global.max_distance_sight = 100;
 }
 
 void mesh_render(Mesh *mesh_box, float fElapsedTime, vec3 dirOffset){
     float fTheta =0;
     fTheta +=(0.002f * fElapsedTime);
 
-    // size_t box_triangle_count = 12;
-    // Mesh *mesh_box = mesh_create(box_triangle_count);
-    // mesh_init_tris_SampleBox(mesh_box);
-    // Mesh *mesh_box = mesh_create_loadfromObj();
-    // mesh_loadfrom_Obj(mesh_box);
-
     //Mesh triangles
     vec3 normal, line1, line2;
-    Triangle ArrTri[mesh_box->tris_num];
-    bool ArrTriBool[mesh_box->tris_num];
-    memset(ArrTriBool, false, sizeof(ArrTriBool)); 
+    Triangle **ArrTri_To_Render = malloc(sizeof(Triangle*) * mesh_box->tris_num*2);
+    int ArrTri_To_Render_Size = 0;
 
     // Matrix *mproj = mat_create_projectionmatrix_sample();
     Matrix mproj = Matrix_MakeProjection(90.0f, (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH, 0.1f, 1000.0f);
@@ -133,6 +129,9 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime, vec3 dirOffset){
         vec3 vCameraRay = Vec_Subtract(t.p[0], global.g_camera);
         if(Vec_DotProduct(normal, vCameraRay)<0.0f)
         {
+            // only from 0-maxdistance should be seen triangles
+            // if(abs((t.p[0].z+t.p[1].z+t.p[2].z)/3.0f - global.g_camera.z) > global.max_distance_sight) break; 
+
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
             vec3 light_direction = { 0.0f, 0.0f, -1.0f };
             light_direction = Vec_Normalise(light_direction);
@@ -140,82 +139,116 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime, vec3 dirOffset){
 				    // How similar is normal to light direction
             float dp = Max(0.1f, Vec_DotProduct(light_direction, normal));
 				    t.color = GetColour(dp);
+            tViewed.color = t.color;
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
-
+            
             // Convert World Space --> View Space
             tViewed.p[0] = Matrix_MultiplyVector(&matView, &t.p[0]);
             tViewed.p[1] = Matrix_MultiplyVector(&matView, &t.p[1]);
             tViewed.p[2] = Matrix_MultiplyVector(&matView, &t.p[2]);
+            
+            // Clip Viewed Triangle against near plane, this could form two additioan triangles.
+            int nClippedTriangle = 0;
+            Triangle clipped[2];
+            nClippedTriangle = Triangle_ClipAgainstPlane(&(vec3){0.0f, 0.0f, 0.1f,}, &(vec3){0.0f, 0.0f, 1.0f}, &tViewed, &clipped[0], &clipped[1]);
 
-            //project triangles from 3D --> 2D
-            // t.p[0] = Matrix_MultiplyVector(&mproj, &t.p[0]);
-            // t.p[1] = Matrix_MultiplyVector(&mproj, &t.p[1]);
-            // t.p[2] = Matrix_MultiplyVector(&mproj, &t.p[2]);
-            t.p[0] = Matrix_MultiplyVector(&mproj, &tViewed.p[0]);
-            t.p[1] = Matrix_MultiplyVector(&mproj, &tViewed.p[1]);
-            t.p[2] = Matrix_MultiplyVector(&mproj, &tViewed.p[2]);
+            for( int n=0; n<nClippedTriangle; n++){
+                //project triangles from 3D --> 2D
+                t.p[0] = Matrix_MultiplyVector(&mproj, &clipped[n].p[0]);
+                t.p[1] = Matrix_MultiplyVector(&mproj, &clipped[n].p[1]);
+                t.p[2] = Matrix_MultiplyVector(&mproj, &clipped[n].p[2]);
 
-            t.p[0] = Vec_Div(t.p[0], t.p[0].w);  // t.p[0].w = 1;
-            t.p[1] = Vec_Div(t.p[1], t.p[1].w);  // t.p[0].w = 1;
-            t.p[2] = Vec_Div(t.p[2], t.p[2].w);  // t.p[0].w = 1;
+                t.p[0] = Vec_Div(t.p[0], t.p[0].w);  // t.p[0].w = 1;
+                t.p[1] = Vec_Div(t.p[1], t.p[1].w);  // t.p[0].w = 1;
+                t.p[2] = Vec_Div(t.p[2], t.p[2].w);  // t.p[0].w = 1;
 
-            //Scale into view
-            vec3 vOffsetView = {1,1,0};
-            t.p[0] = Vec_Add(t.p[0], vOffsetView);
-            t.p[1] = Vec_Add(t.p[1], vOffsetView);
-            t.p[2] = Vec_Add(t.p[2], vOffsetView);
-            t.p[0].x *= 0.5f*(float)SCREEN_WIDTH;
-            t.p[1].x *= 0.5f*(float)SCREEN_WIDTH;
-            t.p[2].x *= 0.5f*(float)SCREEN_WIDTH;
-            t.p[0].y *= 0.5f*(float)SCREEN_HEIGHT;
-            t.p[1].y *= 0.5f*(float)SCREEN_HEIGHT;
-            t.p[2].y *= 0.5f*(float)SCREEN_HEIGHT;
-
-            ArrTri[i] = t;
-            ArrTriBool[i] = true;
-        } else{
-            ArrTri[i] = t;   
-            ArrTriBool[i] = false;
+                //Scale into view
+                vec3 vOffsetView = {1,1,0};
+                t.p[0] = Vec_Add(t.p[0], vOffsetView);
+                t.p[1] = Vec_Add(t.p[1], vOffsetView);
+                t.p[2] = Vec_Add(t.p[2], vOffsetView);
+                t.p[0].x *= 0.5f*(float)SCREEN_WIDTH;
+                t.p[1].x *= 0.5f*(float)SCREEN_WIDTH;
+                t.p[2].x *= 0.5f*(float)SCREEN_WIDTH;
+                t.p[0].y *= 0.5f*(float)SCREEN_HEIGHT;
+                t.p[1].y *= 0.5f*(float)SCREEN_HEIGHT;
+                t.p[2].y *= 0.5f*(float)SCREEN_HEIGHT;
+                
+                ArrTri_To_Render[ArrTri_To_Render_Size] = (Triangle*)malloc(sizeof(Triangle));
+                ArrTri_To_Render[ArrTri_To_Render_Size]->p[0] = t.p[0];
+                ArrTri_To_Render[ArrTri_To_Render_Size]->p[1] = t.p[1];
+                ArrTri_To_Render[ArrTri_To_Render_Size]->p[2] = t.p[2];
+                ArrTri_To_Render[ArrTri_To_Render_Size]->color = t.color;
+                ArrTri_To_Render_Size++;
+            }
         }
     }
-
-    //remove Triangles not rendermesh_box->tris_numand re-align
-    int sizeToRenderTri = 0;
-    int ArrTriIndexExist[mesh_box->tris_num];
-    for(int i=0; i<mesh_box->tris_num; i++){
-        if(ArrTriBool[i]==true){  
-            sizeToRenderTri++;
-        }
-    }
-    Triangle ArrTri_To_Render[sizeToRenderTri];
-    int idx = 0;
-    for(int i=0; i<mesh_box->tris_num; i++){
-        if(ArrTriBool[i]==true){
-            ArrTri_To_Render[idx]= ArrTri[i];
-            idx++;
-        }
-    }
+    //Shrink ArrTri_To_Render lengthofarray to ArrTri_To_Render_Size
+    Triangle **ArrTri_To_Render_exact = realloc(ArrTri_To_Render, sizeof(Triangle*) * ArrTri_To_Render_Size);
+    Arraylist *arrlist_monitorbound_clip = arraylist_create(sizeof(Triangle), 0);
 
     // sort through z (render from back to front)
-    int numElements = sizeof(ArrTri_To_Render) / sizeof(Triangle);
-    qsort(ArrTri_To_Render, numElements, sizeof(Triangle), compareMyStructs);
-    for(int i=0; i<sizeToRenderTri; i++){
-        // Render_TriangleFill(ArrTri_To_Render[i]);
-        Render_TriangleFill_ScanLine2(ArrTri_To_Render[i]);
-        Render_TriangleLines(ArrTri_To_Render[i]);
+    // qsort(ArrTri_To_Render, numElements, sizeof(Triangle), compareMyStructs);  //OLD
+    qsort(ArrTri_To_Render_exact, ArrTri_To_Render_Size, sizeof(Triangle*), compareMyPtr); 
+    for(int i=0; i<ArrTri_To_Render_Size; i++){
+        // Render_TriangleFill(*ArrTri_To_Render_exact[i]);  //SLOW
+        // Render_TriangleFill_ScanLine2(*ArrTri_To_Render_exact[i]);
+        // Render_TriangleLines(*ArrTri_To_Render_exact[i]);
+
+        Triangle clipped[2];
+        int nTrisToAdd = 0;
+        arraylist_append(arrlist_monitorbound_clip, ArrTri_To_Render_exact[i]);
+        int nNewTriangles = 1;
+        for (int p = 0; p < 4; p++)
+        {
+            while (nNewTriangles > 0)
+            {
+                // Take triangle from front of queue
+                Triangle *test = arraylist_get(arrlist_monitorbound_clip, 0);
+                arraylist_remove(arrlist_monitorbound_clip, 0);
+                nNewTriangles--;
+
+                // Clip it against a plane. We only need to test each 
+                // subsequent plane, against subsequent new triangles
+                // as all triangles after a plane clip are guaranteed
+                // to lie on the inside of the plane. I like how this
+                // comment is almost completely and utterly justified
+                switch (p)
+                {
+                    case 0:	nTrisToAdd = Triangle_ClipAgainstPlane(&(vec3){ 0.0f, 0.0f, 0.0f }, &(vec3){ 0.0f, 1.0f, 0.0f }, test, &clipped[0], &clipped[1]); break;
+                    case 1:	nTrisToAdd = Triangle_ClipAgainstPlane(&(vec3){ 0.0f, (float)SCREEN_HEIGHT - 1, 0.0f }, &(vec3){ 0.0f, -1.0f, 0.0f }, test, &clipped[0], &clipped[1]); break;
+                    case 2:	nTrisToAdd = Triangle_ClipAgainstPlane(&(vec3){ 0.0f, 0.0f, 0.0f }, &(vec3){ 1.0f, 0.0f, 0.0f }, test, &clipped[0], &clipped[1]); break;
+                    case 3:	nTrisToAdd = Triangle_ClipAgainstPlane(&(vec3){ (float)SCREEN_WIDTH - 1, 0.0f, 0.0f }, &(vec3){ -1.0f, 0.0f, 0.0f }, test, &clipped[0], &clipped[1]); break;
+                }
+
+                // Clipping may yield a variable number of triangles, so
+                // add these new ones to the back of the queue for subsequent
+                // clipping against next planes
+                for (int w = 0; w < nTrisToAdd; w++)
+                    arraylist_append(arrlist_monitorbound_clip, &clipped[w]);
+            }
+            nNewTriangles = arrlist_monitorbound_clip->len;
+        }
+        for(int j=0; j<arrlist_monitorbound_clip->len; j++){
+            Triangle *t = arraylist_get(arrlist_monitorbound_clip, j);
+            Render_TriangleFill_ScanLine2(*t);
+            Render_TriangleLines(*t);
+        }
     }
 
-    // SDL_UpdateWindowSurface(global.g_window); ---> move to before render
-    // SDL_Delay(16);
+
+    for(int i=0; i<ArrTri_To_Render_Size; i++)
+        free(ArrTri_To_Render[i]);
+    free(ArrTri_To_Render);
+    free(arrlist_monitorbound_clip);
 }
 
 void mesh_render_static(Mesh *mesh_box, vec3 dirOffset){
 
     //Mesh triangles
     vec3 normal, line1, line2;
-    Triangle ArrTri[mesh_box->tris_num];
-    bool ArrTriBool[mesh_box->tris_num];
-    memset(ArrTriBool, false, sizeof(ArrTriBool)); 
+    Triangle **ArrTri_To_Render = malloc(sizeof(Triangle*) * mesh_box->tris_num*2);
+    int ArrTri_To_Render_Size = 0;
 
     // Matrix *mproj = mat_create_projectionmatrix_sample();
     Matrix mproj = Matrix_MakeProjection(90.0f, (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH, 0.1f, 1000.0f);
@@ -270,6 +303,9 @@ void mesh_render_static(Mesh *mesh_box, vec3 dirOffset){
         vec3 vCameraRay = Vec_Subtract(t.p[0], global.g_camera);
         if(Vec_DotProduct(normal, vCameraRay)<0.0f)
         {
+            // only from 0-maxdistance should be seen triangles
+            // if(abs((t.p[0].z+t.p[1].z+t.p[2].z)/3.0f - global.g_camera.z) > global.max_distance_sight) break; 
+
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
             vec3 light_direction = { 0.0f, 0.0f, -1.0f };
             light_direction = Vec_Normalise(light_direction);
@@ -277,73 +313,102 @@ void mesh_render_static(Mesh *mesh_box, vec3 dirOffset){
 				    // How similar is normal to light direction
             float dp = Max(0.1f, Vec_DotProduct(light_direction, normal));
 				    t.color = GetColour(dp);
+            tViewed.color = t.color;
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
-
+            
             // Convert World Space --> View Space
             tViewed.p[0] = Matrix_MultiplyVector(&matView, &t.p[0]);
             tViewed.p[1] = Matrix_MultiplyVector(&matView, &t.p[1]);
             tViewed.p[2] = Matrix_MultiplyVector(&matView, &t.p[2]);
+            
+            // Clip Viewed Triangle against near plane, this could form two additioan triangles.
+            int nClippedTriangle = 0;
+            Triangle clipped[2];
+            nClippedTriangle = Triangle_ClipAgainstPlane(&(vec3){0.0f, 0.0f, 0.1f,}, &(vec3){0.0f, 0.0f, 1.0f}, &tViewed, &clipped[0], &clipped[1]);
 
-            //project triangles from 3D --> 2D
-            // t.p[0] = Matrix_MultiplyVector(&mproj, &t.p[0]);
-            // t.p[1] = Matrix_MultiplyVector(&mproj, &t.p[1]);
-            // t.p[2] = Matrix_MultiplyVector(&mproj, &t.p[2]);
-            t.p[0] = Matrix_MultiplyVector(&mproj, &tViewed.p[0]);
-            t.p[1] = Matrix_MultiplyVector(&mproj, &tViewed.p[1]);
-            t.p[2] = Matrix_MultiplyVector(&mproj, &tViewed.p[2]);
+            for( int n=0; n<nClippedTriangle; n++){
+                //project triangles from 3D --> 2D
+                t.p[0] = Matrix_MultiplyVector(&mproj, &clipped[n].p[0]);
+                t.p[1] = Matrix_MultiplyVector(&mproj, &clipped[n].p[1]);
+                t.p[2] = Matrix_MultiplyVector(&mproj, &clipped[n].p[2]);
 
-            t.p[0] = Vec_Div(t.p[0], t.p[0].w);  // t.p[0].w = 1;
-            t.p[1] = Vec_Div(t.p[1], t.p[1].w);  // t.p[0].w = 1;
-            t.p[2] = Vec_Div(t.p[2], t.p[2].w);  // t.p[0].w = 1;
+                t.p[0] = Vec_Div(t.p[0], t.p[0].w);  // t.p[0].w = 1;
+                t.p[1] = Vec_Div(t.p[1], t.p[1].w);  // t.p[0].w = 1;
+                t.p[2] = Vec_Div(t.p[2], t.p[2].w);  // t.p[0].w = 1;
 
-            //Scale into view
-            vec3 vOffsetView = {1,1,0};
-            t.p[0] = Vec_Add(t.p[0], vOffsetView);
-            t.p[1] = Vec_Add(t.p[1], vOffsetView);
-            t.p[2] = Vec_Add(t.p[2], vOffsetView);
-            t.p[0].x *= 0.5f*(float)SCREEN_WIDTH;
-            t.p[1].x *= 0.5f*(float)SCREEN_WIDTH;
-            t.p[2].x *= 0.5f*(float)SCREEN_WIDTH;
-            t.p[0].y *= 0.5f*(float)SCREEN_HEIGHT;
-            t.p[1].y *= 0.5f*(float)SCREEN_HEIGHT;
-            t.p[2].y *= 0.5f*(float)SCREEN_HEIGHT;
-
-            ArrTri[i] = t;
-            ArrTriBool[i] = true;
-        } else{
-            ArrTri[i] = t;   
-            ArrTriBool[i] = false;
+                //Scale into view
+                vec3 vOffsetView = {1,1,0};
+                t.p[0] = Vec_Add(t.p[0], vOffsetView);
+                t.p[1] = Vec_Add(t.p[1], vOffsetView);
+                t.p[2] = Vec_Add(t.p[2], vOffsetView);
+                t.p[0].x *= 0.5f*(float)SCREEN_WIDTH;
+                t.p[1].x *= 0.5f*(float)SCREEN_WIDTH;
+                t.p[2].x *= 0.5f*(float)SCREEN_WIDTH;
+                t.p[0].y *= 0.5f*(float)SCREEN_HEIGHT;
+                t.p[1].y *= 0.5f*(float)SCREEN_HEIGHT;
+                t.p[2].y *= 0.5f*(float)SCREEN_HEIGHT;
+                
+                ArrTri_To_Render[ArrTri_To_Render_Size] = (Triangle*)malloc(sizeof(Triangle));
+                ArrTri_To_Render[ArrTri_To_Render_Size]->p[0] = t.p[0];
+                ArrTri_To_Render[ArrTri_To_Render_Size]->p[1] = t.p[1];
+                ArrTri_To_Render[ArrTri_To_Render_Size]->p[2] = t.p[2];
+                ArrTri_To_Render[ArrTri_To_Render_Size]->color = t.color;
+                ArrTri_To_Render_Size++;
+            }
         }
     }
-
-    //remove Triangles not rendermesh_box->tris_numand re-align
-    int sizeToRenderTri = 0;
-    int ArrTriIndexExist[mesh_box->tris_num];
-    for(int i=0; i<mesh_box->tris_num; i++){
-        if(ArrTriBool[i]==true){  
-            sizeToRenderTri++;
-        }
-    }
-    Triangle ArrTri_To_Render[sizeToRenderTri];
-    int idx = 0;
-    for(int i=0; i<mesh_box->tris_num; i++){
-        if(ArrTriBool[i]==true){
-            ArrTri_To_Render[idx]= ArrTri[i];
-            idx++;
-        }
-    }
+    //Shrink ArrTri_To_Render lengthofarray to ArrTri_To_Render_Size
+    Triangle **ArrTri_To_Render_exact = realloc(ArrTri_To_Render, sizeof(Triangle*) * ArrTri_To_Render_Size);
+    Arraylist *arrlist_monitorbound_clip = arraylist_create(sizeof(Triangle), 0);
 
     // sort through z (render from back to front)
-    int numElements = sizeof(ArrTri_To_Render) / sizeof(Triangle);
-    qsort(ArrTri_To_Render, numElements, sizeof(Triangle), compareMyStructs);
-    for(int i=0; i<sizeToRenderTri; i++){
-        // Render_TriangleFill(ArrTri_To_Render[i]);
-        Render_TriangleFill_ScanLine2(ArrTri_To_Render[i]);
-        Render_TriangleLines(ArrTri_To_Render[i]);
-    }
+    // qsort(ArrTri_To_Render, numElements, sizeof(Triangle), compareMyStructs);  //OLD
+    qsort(ArrTri_To_Render_exact, ArrTri_To_Render_Size, sizeof(Triangle*), compareMyPtr); 
+    for(int i=0; i<ArrTri_To_Render_Size; i++){
+        // Render_TriangleFill(*ArrTri_To_Render_exact[i]);  //SLOW
+        // Render_TriangleFill_ScanLine2(*ArrTri_To_Render_exact[i]);
+        // Render_TriangleLines(*ArrTri_To_Render_exact[i]);
 
-    // SDL_UpdateWindowSurface(global.g_window); ---> move to before render
-    // SDL_Delay(16);
+        Triangle clipped[2];
+        int nTrisToAdd = 0;
+        arraylist_append(arrlist_monitorbound_clip, ArrTri_To_Render_exact[i]);
+        int nNewTriangles = 1;
+        for (int p = 0; p < 4; p++)
+        {
+            while (nNewTriangles > 0)
+            {
+                // Take triangle from front of queue
+                Triangle *test = arraylist_get(arrlist_monitorbound_clip, 0);
+                arraylist_remove(arrlist_monitorbound_clip, 0);
+                nNewTriangles--;
+
+                // Clip it against a plane. We only need to test each 
+                // subsequent plane, against subsequent new triangles
+                // as all triangles after a plane clip are guaranteed
+                // to lie on the inside of the plane. I like how this
+                // comment is almost completely and utterly justified
+                switch (p)
+                {
+                    case 0:	nTrisToAdd = Triangle_ClipAgainstPlane(&(vec3){ 0.0f, 0.0f, 0.0f }, &(vec3){ 0.0f, 1.0f, 0.0f }, test, &clipped[0], &clipped[1]); break;
+                    case 1:	nTrisToAdd = Triangle_ClipAgainstPlane(&(vec3){ 0.0f, (float)SCREEN_HEIGHT - 1, 0.0f }, &(vec3){ 0.0f, -1.0f, 0.0f }, test, &clipped[0], &clipped[1]); break;
+                    case 2:	nTrisToAdd = Triangle_ClipAgainstPlane(&(vec3){ 0.0f, 0.0f, 0.0f }, &(vec3){ 1.0f, 0.0f, 0.0f }, test, &clipped[0], &clipped[1]); break;
+                    case 3:	nTrisToAdd = Triangle_ClipAgainstPlane(&(vec3){ (float)SCREEN_WIDTH - 1, 0.0f, 0.0f }, &(vec3){ -1.0f, 0.0f, 0.0f }, test, &clipped[0], &clipped[1]); break;
+                }
+
+                // Clipping may yield a variable number of triangles, so
+                // add these new ones to the back of the queue for subsequent
+                // clipping against next planes
+                for (int w = 0; w < nTrisToAdd; w++)
+                    arraylist_append(arrlist_monitorbound_clip, &clipped[w]);
+            }
+            nNewTriangles = arrlist_monitorbound_clip->len;
+        }
+        for(int j=0; j<arrlist_monitorbound_clip->len; j++){
+            Triangle *t = arraylist_get(arrlist_monitorbound_clip, j);
+            // Render_TriangleFill_ScanLine2(*t);
+            Render_TriangleLines(*t);
+        }
+    }
 }
 
 int main(){
@@ -381,15 +446,17 @@ int main(){
     clock_start = clock();
     init_global_properties();
 
-    Mesh *mesh_box = mesh_create_loadfromObj();
-    mesh_loadfrom_Obj(mesh_box);
+    Mesh *mesh_box = mesh_create_loadfromObj(global.objFile_extrudebox);
+    mesh_loadfrom_Obj(mesh_box, global.objFile_extrudebox);
     // mesh_transform_translate(mesh_box, (vec3){0.0f, 0.0f, 10.0f});
-    Mesh *mesh_box2 = mesh_create_loadfromObj();
-    mesh_loadfrom_Obj(mesh_box2);
+    Mesh *mesh_box2 = mesh_create_loadfromObj(global.objFile_extrudebox);
+    mesh_loadfrom_Obj(mesh_box2, global.objFile_extrudebox);
     // mesh_transform_translate(mesh_box2, (vec3){4.0f, 0.0f, 4.0f});
-    Mesh *mesh_box3 = mesh_create_loadfromObj();
-    mesh_loadfrom_Obj(mesh_box3);
+    Mesh *mesh_box3 = mesh_create_loadfromObj(global.objFile_extrudebox);
+    mesh_loadfrom_Obj(mesh_box3, global.objFile_extrudebox);
     // mesh_transform_translate(mesh_box3, (vec3){-4.0f, 0.0f, 4.0f});
+    // Mesh *mesh_mountains = mesh_create_loadfromObj(global.objFile_mountains);
+    // mesh_loadfrom_Obj(mesh_mountains, global.objFile_mountains);
 
     while(isGameRunning){
         LockScreenSurface();
@@ -408,12 +475,18 @@ int main(){
                             global.fYaw -= 0.2;
                             break;
                         case SDL_SCANCODE_W:
-                            vec3 vForward = Vec_Multiply(global.vLookDir, 0.2f);
+                            vec3 vForward = Vec_Multiply(global.vLookDir, 2.0f);
                             global.g_camera = Vec_Add(global.g_camera, vForward);
                             break;
                         case SDL_SCANCODE_S:
-                            vec3 vBackward = Vec_Multiply(global.vLookDir, 0.2f);
+                            vec3 vBackward = Vec_Multiply(global.vLookDir, 2.0f);
                             global.g_camera = Vec_Subtract(global.g_camera, vBackward);
+                            break;
+                        case SDL_SCANCODE_UP:
+                            global.g_camera = (vec3){global.g_camera.x, global.g_camera.y + 1.0f, global.g_camera.z};
+                            break;
+                        case SDL_SCANCODE_DOWN:
+                            global.g_camera = (vec3){global.g_camera.x, global.g_camera.y - 1.0f, global.g_camera.z};
                             break;
                         default:
                             break;
@@ -426,6 +499,10 @@ int main(){
         mesh_render(mesh_box, fElapsedTime, (vec3){0.0f, 0.0f, 7.0f});
         mesh_render(mesh_box2, fElapsedTime, (vec3){4.0f, 0.0f, 7.0f});
         mesh_render(mesh_box3, fElapsedTime, (vec3){-4.0f, 0.0f, 7.0f});
+        // mesh_render_static(mesh_box, (vec3){0.0f, 0.0f, 7.0f});
+        // mesh_render_static(mesh_box2, (vec3){4.0f, 0.0f, 7.0f});
+        // mesh_render_static(mesh_box3, (vec3){-4.0f, 0.0f, 7.0f});
+        // mesh_render_static(mesh_mountains, (vec3){0.0f, 0.0f, 0.0f});
         SDL_UpdateWindowSurface(global.g_window); 
         // mesh_render_static(mesh_box);
         diff = clock() - start;
