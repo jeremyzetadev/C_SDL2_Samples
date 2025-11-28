@@ -91,7 +91,7 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime, vec3 dirOffset){
     matWorld = Matrix_MultiplyMatrix(&matWorld, &matTrans);
 
     global.vLookDir = (vec3){0, 0, 1};
-    vec3 vUp = (vec3){0, 1, 0};
+    vec3 vUp = (vec3){0, -1, 0};  // camera is upsidedown if y = 1 (TODO: check orientation of mat and sdl to learn the positioning as well as cross product)
     // vec3 vTarget = Vec_Add(global.g_camera, global.vLookDir);
     vec3 vTarget = (vec3){0, 0, 1};
     Matrix matCameraRot = Matrix_MakeRotationY(global.fYaw);
@@ -264,8 +264,7 @@ void mesh_render_static(Mesh *mesh_box, vec3 dirOffset){
     matWorld = Matrix_MultiplyMatrix(&matWorld, &matTrans);
 
     global.vLookDir = (vec3){0, 0, 1};
-    global.vLookDir = (vec3){0, 0, 1};
-    vec3 vUp = (vec3){0, 1, 0};
+    vec3 vUp = (vec3){0, -1, 0};  // camera is upsidedown if y = 1 (TODO: check orientation of mat and sdl to learn the positioning as well as cross product)
     // vec3 vTarget = Vec_Add(global.g_camera, global.vLookDir);
     vec3 vTarget = (vec3){0, 0, 1};
     Matrix matCameraRot = Matrix_MakeRotationY(global.fYaw);
