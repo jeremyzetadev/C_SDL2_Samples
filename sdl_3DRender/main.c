@@ -23,7 +23,7 @@ void InitializeProgram(){
     if(SDL_Init(SDL_INIT_VIDEO) <0)
         ERROR_EXIT("SDL could not initialized, SDL_Error: %s\n" ,SDL_GetError());
 
-    global.g_window = SDL_CreateWindow("Moving Camera Through 3D Space with rendered rotating obj", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
+    global.g_window = SDL_CreateWindow("Moving Camera Through 3D Space with rendered rotating/landscape obj", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
     if(!global.g_window)
         ERROR_EXIT("g_window could not be created, SDL_Error: %s\n", SDL_GetError());
 
@@ -57,11 +57,11 @@ void init_global_properties(){
             global.matRotZ.m[i][j] = 0.0f;
         }
     }
-    global.g_camera = (vec3){0, 0, 0};
+    global.g_camera = (vec3){0, 0, 0}; // adjust to 25 when testing mountains
     // global.objFile = "axis.obj";
     global.objFile_extrudebox = "blender_legacyobj.obj";
     global.objFile_mountains = "blender_legacymountain.obj";
-    global.max_distance_sight = 100;
+    global.max_distance_sight = 25;
 }
 
 void mesh_render(Mesh *mesh_box, float fElapsedTime, vec3 dirOffset){
@@ -125,12 +125,21 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime, vec3 dirOffset){
         //triangle normal compute for show if facing the camera
 
 
-        //triangle not facing camera 
+        //triangle not facing camera && only from 0-maxdistance should be seen triangle
         vec3 vCameraRay = Vec_Subtract(t.p[0], global.g_camera);
-        if(Vec_DotProduct(normal, vCameraRay)<0.0f)
+        if(Vec_DotProduct(normal, vCameraRay)<0.0f && abs((t.p[0].z+t.p[1].z+t.p[2].z)/3.0f - global.g_camera.z) < global.max_distance_sight && abs((t.p[0].x+t.p[1].x+t.p[2].x)/3.0f - global.g_camera.x) < global.max_distance_sight)
         {
-            // only from 0-maxdistance should be seen triangles
-            // if(abs((t.p[0].z+t.p[1].z+t.p[2].z)/3.0f - global.g_camera.z) > global.max_distance_sight) break; 
+            // only from 0-maxdistance should be seen render object
+            // float zdistcheck =abs((t.p[0].z+t.p[1].z+t.p[2].z)/3.0f - global.g_camera.z);
+            // SDL_Log("zdistance: %f\n", zdistcheck);
+            // if(abs((t.p[0].z+t.p[1].z+t.p[2].z)/3.0f - global.g_camera.z) > global.max_distance_sight){
+                // for(int i=0; i<ArrTri_To_Render_Size; i++)
+                //     free(ArrTri_To_Render[i]);
+                // free(ArrTri_To_Render);
+                // return;
+            //     continue;
+            // } 
+
 
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
             vec3 light_direction = { 0.0f, 0.0f, -1.0f };
@@ -239,7 +248,8 @@ void mesh_render(Mesh *mesh_box, float fElapsedTime, vec3 dirOffset){
 
     for(int i=0; i<ArrTri_To_Render_Size; i++)
         free(ArrTri_To_Render[i]);
-    free(ArrTri_To_Render);
+    if(ArrTri_To_Render_Size!=0) 
+        free(ArrTri_To_Render);
     free(arrlist_monitorbound_clip);
 }
 
@@ -298,12 +308,20 @@ void mesh_render_static(Mesh *mesh_box, vec3 dirOffset){
         //triangle normal compute for show if facing the camera
 
 
-        //triangle not facing camera 
+        //triangle not facing camera && only from 0-maxdistance should be seen triangle
         vec3 vCameraRay = Vec_Subtract(t.p[0], global.g_camera);
-        if(Vec_DotProduct(normal, vCameraRay)<0.0f)
+        if(Vec_DotProduct(normal, vCameraRay)<0.0f && abs((t.p[0].z+t.p[1].z+t.p[2].z)/3.0f - global.g_camera.z) < global.max_distance_sight && abs((t.p[0].x+t.p[1].x+t.p[2].x)/3.0f - global.g_camera.x) < global.max_distance_sight)
         {
-            // only from 0-maxdistance should be seen triangles
-            // if(abs((t.p[0].z+t.p[1].z+t.p[2].z)/3.0f - global.g_camera.z) > global.max_distance_sight) break; 
+            // only from 0-maxdistance should be seen render object
+            // float zdistcheck =abs((t.p[0].z+t.p[1].z+t.p[2].z)/3.0f - global.g_camera.z);
+            // SDL_Log("zdistance: %f\n", zdistcheck);
+            // if(abs((t.p[0].z+t.p[1].z+t.p[2].z)/3.0f - global.g_camera.z) > global.max_distance_sight){
+                // for(int i=0; i<ArrTri_To_Render_Size; i++)
+                //     free(ArrTri_To_Render[i]);
+                // free(ArrTri_To_Render);
+                // return;
+            //     continue;
+            // } 
 
             ////// implement illumination by distance from camera (near lighter, far darker)  /////
             vec3 light_direction = { 0.0f, 0.0f, -1.0f };
@@ -404,10 +422,16 @@ void mesh_render_static(Mesh *mesh_box, vec3 dirOffset){
         }
         for(int j=0; j<arrlist_monitorbound_clip->len; j++){
             Triangle *t = arraylist_get(arrlist_monitorbound_clip, j);
-            // Render_TriangleFill_ScanLine2(*t);
+            Render_TriangleFill_ScanLine2(*t);
             Render_TriangleLines(*t);
         }
     }
+
+    for(int i=0; i<ArrTri_To_Render_Size; i++)
+        free(ArrTri_To_Render[i]);
+    if(ArrTri_To_Render_Size!=0) 
+        free(ArrTri_To_Render);
+    free(arrlist_monitorbound_clip);
 }
 
 int main(){
@@ -454,8 +478,8 @@ int main(){
     Mesh *mesh_box3 = mesh_create_loadfromObj(global.objFile_extrudebox);
     mesh_loadfrom_Obj(mesh_box3, global.objFile_extrudebox);
     // mesh_transform_translate(mesh_box3, (vec3){-4.0f, 0.0f, 4.0f});
-    // Mesh *mesh_mountains = mesh_create_loadfromObj(global.objFile_mountains);
-    // mesh_loadfrom_Obj(mesh_mountains, global.objFile_mountains);
+    Mesh *mesh_mountains = mesh_create_loadfromObj(global.objFile_mountains);
+    mesh_loadfrom_Obj(mesh_mountains, global.objFile_mountains);
 
     while(isGameRunning){
         LockScreenSurface();
@@ -468,10 +492,10 @@ int main(){
                 case SDL_KEYDOWN:                                        
                     switch(event.key.keysym.scancode){
                         case SDL_SCANCODE_A:
-                            global.fYaw += 0.2f;  //*fElapsedTime use time to smooth movement
+                            global.fYaw -= 0.2f;  //*fElapsedTime use time to smooth movement
                             break;
                         case SDL_SCANCODE_D:
-                            global.fYaw -= 0.2;
+                            global.fYaw += 0.2;
                             break;
                         case SDL_SCANCODE_W:
                             vec3 vForward = Vec_Multiply(global.vLookDir, 2.0f);
