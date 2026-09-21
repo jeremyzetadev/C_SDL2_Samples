@@ -37,3 +37,6 @@ int main(){
 
     pthread_mutex_destroy(&mutex);
 }
+
+
+// c++ mutex samples (https://simplifycpp.org/articles/a0378/efficient-multithreading-in-cpp-mutexes-atomics-and-lock-guards/)
